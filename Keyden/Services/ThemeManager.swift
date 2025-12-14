@@ -40,16 +40,12 @@ final class ThemeManager: ObservableObject {
         let saved = UserDefaults.standard.string(forKey: "themeMode") ?? "System"
         mode = ThemeMode(rawValue: saved) ?? .system
         
-        // Set isDark based on saved mode (not relying on NSApp which may not be ready)
+        // Set isDark based on saved mode
         switch mode {
         case .system:
-            // For system mode, default to light until NSApp is ready
-            // Will be updated in applyTheme() when called from AppDelegate
-            if let app = NSApp {
-                isDark = app.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            } else {
-                isDark = false
-            }
+            // Check system appearance using UserDefaults (works even before NSApp is ready)
+            let systemStyle = UserDefaults.standard.string(forKey: "AppleInterfaceStyle")
+            isDark = systemStyle == "Dark"
         case .light:
             isDark = false
         case .dark:
@@ -86,20 +82,8 @@ final class ThemeManager: ObservableObject {
         }
     }
     
-    private func updateIsDark() {
-        switch mode {
-        case .system:
-            isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        case .light:
-            isDark = false
-        case .dark:
-            isDark = true
-        }
-    }
-    
     func applyTheme() {
-        updateIsDark()
-        
+        // First, set the appearance
         switch mode {
         case .system:
             NSApp.appearance = nil
@@ -107,6 +91,30 @@ final class ThemeManager: ObservableObject {
             NSApp.appearance = NSAppearance(named: .aqua)
         case .dark:
             NSApp.appearance = NSAppearance(named: .darkAqua)
+        }
+        
+        // Then update isDark based on the new appearance
+        // Use a small delay to ensure the appearance change has taken effect
+        DispatchQueue.main.async {
+            self.updateIsDark()
+        }
+    }
+    
+    private func updateIsDark() {
+        let newValue: Bool
+        switch mode {
+        case .system:
+            // Check system appearance using UserDefaults (most reliable)
+            let systemStyle = UserDefaults.standard.string(forKey: "AppleInterfaceStyle")
+            newValue = systemStyle == "Dark"
+        case .light:
+            newValue = false
+        case .dark:
+            newValue = true
+        }
+        
+        if isDark != newValue {
+            isDark = newValue
         }
     }
 }

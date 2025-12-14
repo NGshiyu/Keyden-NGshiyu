@@ -68,6 +68,8 @@
 "pinned" = "Pinned";
 "about" = "About";
 "version" = "Version";
+"launch_at_login" = "Launch at Login";
+"launch_at_login_desc" = "Start Keyden when you log in";
 
 // Language
 "language" = "Language";

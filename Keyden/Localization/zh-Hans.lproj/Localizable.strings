@@ -68,6 +68,8 @@
 "pinned" = "已置顶";
 "about" = "关于";
 "version" = "版本";
+"launch_at_login" = "登录时启动";
+"launch_at_login_desc" = "登录 Mac 时自动启动 Keyden";
 
 // Language
 "language" = "语言";

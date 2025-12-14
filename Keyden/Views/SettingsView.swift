@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ServiceManagement
 
 struct SettingsView: View {
     @Binding var isPresented: Bool
@@ -167,6 +168,7 @@ struct GeneralTabContent: View {
     @StateObject private var languageManager = LanguageManager.shared
     @AppStorage("autoClearClipboard") private var autoClearClipboard = false
     @StateObject private var vaultService = VaultService.shared
+    @State private var launchAtLogin = false
     
     private func themeDisplayName(_ mode: ThemeMode) -> String {
         switch mode {
@@ -224,6 +226,28 @@ struct GeneralTabContent: View {
                 }
             }
             
+            // Launch at login section
+            SettingsCard(title: L10n.general, icon: "power", theme: theme) {
+                Toggle(isOn: $launchAtLogin) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(L10n.launchAtLogin)
+                            .font(.system(size: 13))
+                            .foregroundColor(theme.textPrimary)
+                        Text(L10n.launchAtLoginDesc)
+                            .font(.system(size: 11))
+                            .foregroundColor(theme.textSecondary)
+                    }
+                }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .onChange(of: launchAtLogin) { newValue in
+                    setLaunchAtLogin(newValue)
+                }
+            }
+            .onAppear {
+                launchAtLogin = getLaunchAtLogin()
+            }
+            
             // Clipboard section
             SettingsCard(title: L10n.clipboard, icon: "doc.on.clipboard.fill", theme: theme) {
                 Toggle(isOn: $autoClearClipboard) {
@@ -272,6 +296,33 @@ struct GeneralTabContent: View {
             }
         }
         .padding(16)
+    }
+    
+    // MARK: - Launch at Login Helpers
+    
+    private func getLaunchAtLogin() -> Bool {
+        if #available(macOS 13.0, *) {
+            return SMAppService.mainApp.status == .enabled
+        } else {
+            return UserDefaults.standard.bool(forKey: "launchAtLogin")
+        }
+    }
+    
+    private func setLaunchAtLogin(_ enabled: Bool) {
+        if #available(macOS 13.0, *) {
+            do {
+                if enabled {
+                    try SMAppService.mainApp.register()
+                } else {
+                    try SMAppService.mainApp.unregister()
+                }
+            } catch {
+                print("Failed to \(enabled ? "enable" : "disable") launch at login: \(error)")
+            }
+        } else {
+            // Fallback for macOS 12 - just save preference
+            UserDefaults.standard.set(enabled, forKey: "launchAtLogin")
+        }
     }
 }
 

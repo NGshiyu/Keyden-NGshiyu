@@ -140,6 +140,8 @@ class LanguageManager: ObservableObject {
         "pinned": "Pinned",
         "about": "About",
         "version": "Version",
+        "launch_at_login": "Launch at Login",
+        "launch_at_login_desc": "Start Keyden when you log in",
         
         // Language
         "language": "Language",
@@ -267,6 +269,8 @@ enum L10n {
     static var pinned: String { manager.localizedString(forKey: "pinned") }
     static var about: String { manager.localizedString(forKey: "about") }
     static var version: String { manager.localizedString(forKey: "version") }
+    static var launchAtLogin: String { manager.localizedString(forKey: "launch_at_login") }
+    static var launchAtLoginDesc: String { manager.localizedString(forKey: "launch_at_login_desc") }
     
     // MARK: - Language
     static var language: String { manager.localizedString(forKey: "language") }
