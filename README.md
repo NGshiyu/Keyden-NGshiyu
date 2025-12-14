@@ -34,7 +34,7 @@ Open the DMG and drag Keyden to Applications.
 ## Build from Source
 
 ```bash
-git clone https://github.com/tassel/Keyden.git
+git clone https://github.com/tasselx/Keyden.git
 cd Keyden
 make build    # Build app
 make dmg      # Create DMG
@@ -42,7 +42,7 @@ make dmg      # Create DMG
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=tassel/Keyden&type=Date)](https://star-history.com/#tasselx/Keyden&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=tasselx/Keyden&type=Date)](https://star-history.com/#tasselx/Keyden&Date)
 
 ## License
 

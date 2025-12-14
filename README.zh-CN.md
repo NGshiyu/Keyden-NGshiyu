@@ -34,7 +34,7 @@
 ## 从源码构建
 
 ```bash
-git clone https://github.com/tassel/Keyden.git
+git clone https://github.com/tasselx/Keyden.git
 cd Keyden
 make build    # 构建应用
 make dmg      # 创建 DMG
@@ -42,7 +42,7 @@ make dmg      # 创建 DMG
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=tassel/Keyden&type=Date)](https://star-history.com/#tasselx/Keyden&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=tasselx/Keyden&type=Date)](https://star-history.com/#tasselx/Keyden&Date)
 
 ## 许可证
 

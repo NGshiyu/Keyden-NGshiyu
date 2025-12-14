@@ -8,6 +8,18 @@
 import SwiftUI
 import ServiceManagement
 
+// MARK: - View Extension for conditional color invert
+extension View {
+    @ViewBuilder
+    func colorInvert(_ condition: Bool) -> some View {
+        if condition {
+            self.colorInvert()
+        } else {
+            self
+        }
+    }
+}
+
 struct SettingsView: View {
     @Binding var isPresented: Bool
     @StateObject private var themeManager = ThemeManager.shared
@@ -271,10 +283,21 @@ struct GeneralTabContent: View {
                         }
                         Spacer()
                         
+                        Text("v1.0.0")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundColor(theme.textTertiary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(theme.inputBackground)
+                            .cornerRadius(4)
+                        
                         // GitHub link
                         Button(action: openGitHub) {
-                            Text("🐙")
-                                .font(.system(size: 14))
+                            Image("GitHubLogo")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 18, height: 18)
+                                .colorInvert(theme.isDark)
                         }
                         .buttonStyle(.plain)
                         .onHover { hovering in
@@ -284,14 +307,6 @@ struct GeneralTabContent: View {
                                 NSCursor.pop()
                             }
                         }
-                        
-                        Text("v1.0.0")
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundColor(theme.textTertiary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(theme.inputBackground)
-                            .cornerRadius(4)
                     }
                     
                     Divider()
