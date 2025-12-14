@@ -98,7 +98,7 @@ final class VaultService: ObservableObject {
     }
     
     /// Save vault to disk
-    func saveVault() throws {
+    func saveVault(triggerSync: Bool = true) throws {
         guard let key = encryptionKey else {
             throw VaultError.locked
         }
@@ -122,24 +122,39 @@ final class VaultService: ObservableObject {
         try data.write(to: vaultFileURL, options: .atomic)
         
         // Trigger auto-sync if enabled
-        triggerAutoSync()
+        if triggerSync {
+            triggerAutoSync()
+        }
     }
+    
+    private var autoSyncWorkItem: DispatchWorkItem?
     
     /// Trigger auto-sync to Gist if enabled
     private func triggerAutoSync() {
-        guard UserDefaults.standard.bool(forKey: "autoSync") else { return }
+        // Default to true if not set (matches @AppStorage default in SettingsView)
+        let autoSyncEnabled = UserDefaults.standard.object(forKey: "autoSync") == nil 
+            ? true 
+            : UserDefaults.standard.bool(forKey: "autoSync")
+        guard autoSyncEnabled else { return }
         guard GistSyncService.shared.isConfigured else { return }
+        guard !GistSyncService.shared.isSyncing else { return }
+        
+        // Cancel previous pending sync
+        autoSyncWorkItem?.cancel()
         
         // Debounce: wait a moment before syncing to batch rapid changes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            Task {
+        let workItem = DispatchWorkItem {
+            Task { @MainActor in
                 do {
                     try await GistSyncService.shared.push()
+                    ToastManager.shared.show(L10n.dataSynced, icon: "checkmark.icloud.fill")
                 } catch {
-                    print("Auto-sync failed: \(error.localizedDescription)")
+                    print("[AutoSync] Failed: \(error.localizedDescription)")
                 }
             }
         }
+        autoSyncWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: workItem)
     }
     
     /// Get encrypted vault data for Gist sync (exports plain JSON for cross-device sync)
@@ -151,7 +166,8 @@ final class VaultService: ObservableObject {
     func importVaultData(_ data: Data) throws {
         let importedVault = try JSONDecoder().decode(Vault.self, from: data)
         vault = importedVault
-        try saveVault()
+        // Don't trigger auto-sync when importing from remote
+        try saveVault(triggerSync: false)
     }
     
     // MARK: - Token Operations

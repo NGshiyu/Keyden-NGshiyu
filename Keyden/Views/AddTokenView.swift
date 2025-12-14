@@ -18,6 +18,8 @@ struct AddTokenView: View {
     @State private var errorMessage: String?
     @State private var isProcessing = false
     @State private var pendingToken: PendingToken?
+    @State private var pendingTokens: [PendingToken] = []  // For batch import
+    @State private var currentBatchIndex = 0
     @State private var isWaitingForScreenshot = false
     @State private var showPermissionAlert = false
     
@@ -41,7 +43,9 @@ struct AddTokenView: View {
             Divider()
                 .background(theme.separator)
             
-            if let pending = pendingToken {
+            if !pendingTokens.isEmpty {
+                batchConfirmView
+            } else if let pending = pendingToken {
                 confirmView(pending)
             } else {
                 inputView
@@ -94,7 +98,10 @@ struct AddTokenView: View {
         HStack {
             // Back button (icon only)
             Button(action: { 
-                if pendingToken != nil {
+                if !pendingTokens.isEmpty {
+                    pendingTokens = []
+                    currentBatchIndex = 0
+                } else if pendingToken != nil {
                     pendingToken = nil
                 } else {
                     isPresented = false
@@ -111,7 +118,7 @@ struct AddTokenView: View {
             
             Spacer()
             
-            Text(pendingToken != nil ? L10n.confirm : L10n.addAccount)
+            Text(!pendingTokens.isEmpty ? "\(currentBatchIndex + 1)/\(pendingTokens.count)" : (pendingToken != nil ? L10n.confirm : L10n.addAccount))
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(theme.textPrimary)
             
@@ -224,6 +231,107 @@ struct AddTokenView: View {
         }
     }
     
+    // MARK: - Batch Confirm View (for multiple tokens)
+    private var batchConfirmView: some View {
+        VStack(spacing: 16) {
+            // Progress indicator
+            HStack {
+                Text(L10n.importData)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(theme.textPrimary)
+                Spacer()
+                Text("\(currentBatchIndex + 1) / \(pendingTokens.count)")
+                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+                    .foregroundColor(theme.accent)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            
+            if currentBatchIndex < pendingTokens.count {
+                let current = pendingTokens[currentBatchIndex]
+                
+                // Preview card
+                TokenPreviewCard(
+                    secret: current.secret,
+                    digits: current.digits,
+                    period: current.period,
+                    algorithm: current.algorithm,
+                    theme: theme
+                )
+                
+                // Account info
+                VStack(spacing: 8) {
+                    InfoRow(label: L10n.service, value: current.issuer.isEmpty ? "-" : current.issuer, theme: theme)
+                    InfoRow(label: L10n.account, value: current.account.isEmpty ? "-" : current.account, theme: theme)
+                }
+                .padding(.horizontal, 20)
+            }
+            
+            Spacer()
+            
+            // Action buttons
+            VStack(spacing: 10) {
+                // Add current token button
+                Button(action: saveCurrentBatchToken) {
+                    HStack {
+                        if isProcessing {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                                .progressViewStyle(CircularProgressViewStyle())
+                        }
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 14))
+                        Text(currentBatchIndex < pendingTokens.count - 1 ? L10n.addAndNext : L10n.confirmAdd)
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(theme.accentGradient)
+                    .foregroundColor(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(isProcessing)
+                
+                // Add all remaining button (if more than one left)
+                if pendingTokens.count - currentBatchIndex > 1 {
+                    Button(action: saveAllBatchTokens) {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 14))
+                            Text(L10n.addAll(pendingTokens.count - currentBatchIndex))
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(theme.cardBackground)
+                        .foregroundColor(theme.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(theme.accent.opacity(0.3), lineWidth: 1)
+                        )
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                // Skip button
+                if currentBatchIndex < pendingTokens.count - 1 {
+                    Button(action: skipCurrentBatchToken) {
+                        Text(L10n.skip)
+                            .font(.system(size: 13))
+                            .foregroundColor(theme.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
+        }
+    }
+    
     // MARK: - Confirm View
     private func confirmView(_ pending: PendingToken) -> some View {
         VStack(spacing: 20) {
@@ -281,37 +389,62 @@ struct AddTokenView: View {
         
         errorMessage = nil
         
-        if trimmed.lowercased().hasPrefix("otpauth://") {
-            if let url = OTPAuthURL.parse(trimmed) {
-                pendingToken = PendingToken(
-                    issuer: url.issuer,
-                    account: url.account,
-                    secret: url.secret,
-                    digits: url.digits,
-                    period: url.period,
-                    algorithm: url.algorithm
-                )
-                return
+        // Split by newlines to support multiple accounts
+        let lines = trimmed.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        
+        // Parse all valid tokens
+        var tokens: [PendingToken] = []
+        var invalidCount = 0
+        
+        for line in lines {
+            if line.lowercased().hasPrefix("otpauth://") {
+                if let url = OTPAuthURL.parse(line) {
+                    tokens.append(PendingToken(
+                        issuer: url.issuer,
+                        account: url.account,
+                        secret: url.secret,
+                        digits: url.digits,
+                        period: url.period,
+                        algorithm: url.algorithm
+                    ))
+                } else {
+                    invalidCount += 1
+                }
             } else {
-                errorMessage = "Invalid otpauth:// URL format"
-                return
+                // Try as Base32 secret
+                let cleaned = line.uppercased().replacingOccurrences(of: " ", with: "")
+                if TOTPService.shared.isValidBase32(cleaned) {
+                    tokens.append(PendingToken(
+                        issuer: "",
+                        account: "",
+                        secret: cleaned,
+                        digits: 6,
+                        period: 30,
+                        algorithm: .sha1
+                    ))
+                } else {
+                    invalidCount += 1
+                }
             }
         }
         
-        let cleaned = trimmed.uppercased().replacingOccurrences(of: " ", with: "")
-        if TOTPService.shared.isValidBase32(cleaned) {
-            pendingToken = PendingToken(
-                issuer: "",
-                account: "",
-                secret: cleaned,
-                digits: 6,
-                period: 30,
-                algorithm: .sha1
-            )
-            return
+        // Handle results
+        if tokens.isEmpty {
+            errorMessage = L10n.invalidFormat
+        } else if tokens.count == 1 {
+            // Single token - use existing confirm flow
+            pendingToken = tokens.first
+        } else {
+            // Multiple tokens - use batch confirm flow
+            pendingTokens = tokens
+            currentBatchIndex = 0
+            if invalidCount > 0 {
+                // Some lines were invalid, but we have valid ones
+                print("[Keyden] Parsed \(tokens.count) tokens, \(invalidCount) invalid lines skipped")
+            }
         }
-        
-        errorMessage = "Invalid format. Use otpauth:// URL or Base32 secret"
     }
     
     private func scanClipboard() {
@@ -452,7 +585,7 @@ struct AddTokenView: View {
     
     private func saveToken(_ pending: PendingToken) {
         guard !pending.secret.isEmpty else {
-            errorMessage = "Secret key is required"
+            errorMessage = L10n.secretRequired
             return
         }
         
@@ -462,7 +595,7 @@ struct AddTokenView: View {
         let token = Token(
             issuer: pending.issuer,
             account: pending.account,
-            label: label.isEmpty ? "Account" : label,
+            label: label.isEmpty ? L10n.account : label,
             secret: pending.secret,
             digits: pending.digits,
             period: pending.period,
@@ -475,6 +608,97 @@ struct AddTokenView: View {
         } catch {
             errorMessage = error.localizedDescription
             isProcessing = false
+        }
+    }
+    
+    // MARK: - Batch Operations
+    
+    private func saveCurrentBatchToken() {
+        guard currentBatchIndex < pendingTokens.count else { return }
+        
+        let pending = pendingTokens[currentBatchIndex]
+        guard !pending.secret.isEmpty else {
+            skipCurrentBatchToken()
+            return
+        }
+        
+        isProcessing = true
+        
+        let label = pending.issuer.isEmpty ? pending.account : pending.issuer
+        let token = Token(
+            issuer: pending.issuer,
+            account: pending.account,
+            label: label.isEmpty ? L10n.account : label,
+            secret: pending.secret,
+            digits: pending.digits,
+            period: pending.period,
+            algorithm: pending.algorithm
+        )
+        
+        do {
+            try vaultService.addToken(token)
+            isProcessing = false
+            
+            // Move to next or finish
+            if currentBatchIndex < pendingTokens.count - 1 {
+                currentBatchIndex += 1
+            } else {
+                // All done
+                pendingTokens = []
+                currentBatchIndex = 0
+                isPresented = false
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+            isProcessing = false
+        }
+    }
+    
+    private func skipCurrentBatchToken() {
+        if currentBatchIndex < pendingTokens.count - 1 {
+            currentBatchIndex += 1
+        } else {
+            // All done (skipped last)
+            pendingTokens = []
+            currentBatchIndex = 0
+            isPresented = false
+        }
+    }
+    
+    private func saveAllBatchTokens() {
+        isProcessing = true
+        var addedCount = 0
+        
+        for i in currentBatchIndex..<pendingTokens.count {
+            let pending = pendingTokens[i]
+            guard !pending.secret.isEmpty else { continue }
+            
+            let label = pending.issuer.isEmpty ? pending.account : pending.issuer
+            let token = Token(
+                issuer: pending.issuer,
+                account: pending.account,
+                label: label.isEmpty ? L10n.account : label,
+                secret: pending.secret,
+                digits: pending.digits,
+                period: pending.period,
+                algorithm: pending.algorithm
+            )
+            
+            do {
+                try vaultService.addToken(token)
+                addedCount += 1
+            } catch {
+                print("[Keyden] Failed to add token: \(error.localizedDescription)")
+            }
+        }
+        
+        isProcessing = false
+        pendingTokens = []
+        currentBatchIndex = 0
+        isPresented = false
+        
+        if addedCount > 0 {
+            ToastManager.shared.show(L10n.addedCount(addedCount))
         }
     }
 }

@@ -82,6 +82,52 @@ struct SettingsView: View {
     }
 }
 
+// MARK: - Custom Picker (Theme-aware)
+struct CustomPicker<T: Hashable>: View {
+    @Binding var selection: T
+    let options: [T]
+    let label: (T) -> String
+    let theme: ModernTheme
+    
+    @State private var isExpanded = false
+    
+    var body: some View {
+        Menu {
+            ForEach(options, id: \.self) { option in
+                Button(action: { selection = option }) {
+                    HStack {
+                        Text(label(option))
+                        if selection == option {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Text(label(selection))
+                    .font(.system(size: 12))
+                    .foregroundColor(theme.textPrimary)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 9))
+                    .foregroundColor(theme.textSecondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(theme.inputBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(theme.inputBorder, lineWidth: 1)
+            )
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+    }
+}
+
 // MARK: - Tab Pill
 struct TabPill: View {
     let title: String
@@ -146,15 +192,12 @@ struct GeneralTabContent: View {
                     
                     Spacer()
                     
-                    Picker("", selection: $themeManager.mode) {
-                        ForEach(ThemeMode.allCases, id: \.self) { mode in
-                            Text(themeDisplayName(mode)).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .frame(width: 100)
-                    .accentColor(theme.accent)
-                    .foregroundColor(theme.textPrimary)
+                    CustomPicker(
+                        selection: $themeManager.mode,
+                        options: ThemeMode.allCases,
+                        label: { themeDisplayName($0) },
+                        theme: theme
+                    )
                 }
             }
             
@@ -172,15 +215,12 @@ struct GeneralTabContent: View {
                     
                     Spacer()
                     
-                    Picker("", selection: $languageManager.languageMode) {
-                        ForEach(LanguageMode.allCases, id: \.self) { mode in
-                            Text(mode.displayName).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .frame(width: 100)
-                    .accentColor(theme.accent)
-                    .foregroundColor(theme.textPrimary)
+                    CustomPicker(
+                        selection: $languageManager.languageMode,
+                        options: LanguageMode.allCases,
+                        label: { $0.displayName },
+                        theme: theme
+                    )
                 }
             }
             
@@ -313,6 +353,7 @@ struct SyncTabContent: View {
                         .padding(.vertical, 5)
                         .background(theme.accent)
                         .cornerRadius(4)
+                        .contentShape(Rectangle())
                         .buttonStyle(.plain)
                     }
                     
@@ -332,6 +373,12 @@ struct SyncTabContent: View {
                         }
                         .toggleStyle(.switch)
                         .controlSize(.small)
+                        .onChange(of: autoSync) { newValue in
+                            if newValue {
+                                // Push immediately when enabling auto-sync
+                                push()
+                            }
+                        }
                         
                         Divider().background(theme.separator)
                         
@@ -355,72 +402,96 @@ struct SyncTabContent: View {
                             
                             Spacer()
                             
-                            Button(L10n.bindExisting) {
-                                showGistInput = true
+                            if let gistId = gistService.gistId {
+                                Button(action: { openGist(gistId) }) {
+                                    Image(systemName: "arrow.up.right.square")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(theme.accent)
+                                }
+                                .buttonStyle(.plain)
+                                .help(L10n.openInBrowser)
                             }
-                            .font(.system(size: 11))
-                            .foregroundColor(theme.accent)
+                            
+                            Button(action: { showGistInput = true }) {
+                                Image(systemName: "link.badge.plus")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(theme.accent)
+                            }
                             .buttonStyle(.plain)
+                            .help(L10n.bindExisting)
                         }
                     }
                 }
             }
             
             if gistService.isConfigured {
-                // Sync actions
-                SettingsCard(title: L10n.manualSync, icon: "arrow.triangle.2.circlepath", theme: theme) {
-                    HStack(spacing: 10) {
-                        SyncButton(
-                            title: L10n.push,
-                            icon: "arrow.up.circle.fill",
-                            isLoading: gistService.isSyncing,
-                            theme: theme
-                        ) {
-                            push()
+                // Sync actions - compact row
+                HStack(spacing: 8) {
+                    // Push button
+                    Button(action: push) {
+                        HStack(spacing: 4) {
+                            if gistService.isSyncing {
+                                ProgressView()
+                                    .scaleEffect(0.5)
+                                    .frame(width: 12, height: 12)
+                            } else {
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .font(.system(size: 12))
+                            }
+                            Text(L10n.push)
+                                .font(.system(size: 11, weight: .medium))
                         }
-                        
-                        SyncButton(
-                            title: L10n.pull,
-                            icon: "arrow.down.circle.fill",
-                            isLoading: gistService.isSyncing,
-                            isDisabled: !gistService.hasGist,
-                            theme: theme
-                        ) {
-                            showPullConfirm = true
-                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(theme.accentGradient)
+                        .clipShape(Capsule())
+                        .contentShape(Capsule())
                     }
+                    .buttonStyle(.plain)
+                    .disabled(gistService.isSyncing)
                     
-                    if let lastSync = gistService.lastSyncDate {
-                        HStack {
-                            Image(systemName: "clock")
-                                .font(.system(size: 10))
-                            Text("\(L10n.lastSync): \(lastSync, style: .relative)")
-                                .font(.system(size: 11))
+                    // Pull button
+                    Button(action: { showPullConfirm = true }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.system(size: 12))
+                            Text(L10n.pull)
+                                .font(.system(size: 11, weight: .medium))
                         }
-                        .foregroundColor(theme.textTertiary)
-                        .padding(.top, 8)
+                        .foregroundColor(gistService.hasGist ? theme.accent : theme.textTertiary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(theme.cardBackground)
+                        .clipShape(Capsule())
+                        .contentShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .stroke(gistService.hasGist ? theme.accent.opacity(0.3) : theme.border, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!gistService.hasGist || gistService.isSyncing)
+                    
+                    Spacer()
+                    
+                    // Error indicator only
+                    if let msg = message, msg.isError {
+                        HStack(spacing: 3) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 10))
+                            Text(msg.text)
+                                .font(.system(size: 10))
+                                .lineLimit(1)
+                        }
+                        .foregroundColor(theme.danger)
                     }
                 }
-            }
-            
-            // Message
-            if let msg = message {
-                HStack(spacing: 6) {
-                    Image(systemName: msg.isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-                        .font(.system(size: 12))
-                    Text(msg.text)
-                        .font(.system(size: 12))
-                }
-                .foregroundColor(msg.isError ? theme.danger : theme.success)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill((msg.isError ? theme.danger : theme.success).opacity(0.1))
-                )
+                .padding(.horizontal, 4)
             }
         }
         .padding(16)
+        .animation(.easeInOut(duration: 0.2), value: message?.text)
         .sheet(isPresented: $showTokenInput) {
             TokenInputSheet(isPresented: $showTokenInput, isValidating: $isValidating, theme: theme) { newToken in
                 validateAndSaveToken(newToken)
@@ -451,7 +522,7 @@ struct SyncTabContent: View {
                 if valid {
                     gistService.setToken(token)
                     showTokenInput = false
-                    message = ("Token saved successfully", false)
+                    message = (L10n.tokenSaved, false)
                 } else {
                     message = ("Invalid token. Check your token and try again.", true)
                 }
@@ -464,9 +535,10 @@ struct SyncTabContent: View {
         Task {
             do {
                 try await gistService.push()
-                message = ("Pushed successfully", false)
+                ToastManager.shared.show(L10n.dataSynced, icon: "checkmark.icloud.fill")
             } catch {
                 message = (error.localizedDescription, true)
+                autoDismissError()
             }
         }
     }
@@ -476,10 +548,23 @@ struct SyncTabContent: View {
         Task {
             do {
                 try await gistService.pull()
-                message = ("Pulled successfully", false)
+                ToastManager.shared.show(L10n.dataSynced, icon: "checkmark.icloud.fill")
             } catch {
                 message = (error.localizedDescription, true)
+                autoDismissError()
             }
+        }
+    }
+    
+    private func autoDismissError() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            message = nil
+        }
+    }
+    
+    private func openGist(_ gistId: String) {
+        if let url = URL(string: "https://gist.github.com/\(gistId)") {
+            NSWorkspace.shared.open(url)
         }
     }
 }
@@ -527,6 +612,7 @@ struct DataTabContent: View {
                             .padding(.vertical, 6)
                             .background(theme.accent)
                             .cornerRadius(6)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
@@ -564,6 +650,7 @@ struct DataTabContent: View {
                             .padding(.vertical, 6)
                             .background(theme.accent)
                             .cornerRadius(6)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
@@ -618,7 +705,7 @@ struct DataTabContent: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "keyden_backup_\(formattedDate()).json"
-        panel.message = "Choose where to save your backup"
+        panel.message = L10n.saveBackupMessage
         
         panel.begin { response in
             if response == .OK, let url = panel.url {
@@ -737,29 +824,29 @@ struct SyncButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                if isLoading {
+                ZStack {
                     ProgressView()
                         .scaleEffect(0.6)
-                        .progressViewStyle(CircularProgressViewStyle())
-                } else {
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .opacity(isLoading ? 1 : 0)
+                    
                     Image(systemName: icon)
                         .font(.system(size: 13))
+                        .opacity(isLoading ? 0 : 1)
                 }
+                .frame(width: 16, height: 16)
+                
                 Text(title)
                     .font(.system(size: 12, weight: .semibold))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
             .background(
-                Group {
-                    if isDisabled {
-                        RoundedRectangle(cornerRadius: 8).fill(theme.inputBackground)
-                    } else {
-                        RoundedRectangle(cornerRadius: 8).fill(theme.accentGradient)
-                    }
-                }
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isDisabled ? AnyShapeStyle(theme.inputBackground) : AnyShapeStyle(theme.accentGradient))
             )
             .foregroundColor(isDisabled ? theme.textTertiary : .white)
+            .animation(.easeInOut(duration: 0.2), value: isLoading)
         }
         .buttonStyle(.plain)
         .disabled(isLoading || isDisabled)
@@ -834,6 +921,7 @@ struct TokenInputSheet: View {
                     .padding(.vertical, 10)
                     .background(theme.inputBackground)
                     .cornerRadius(8)
+                    .contentShape(Rectangle())
                     .buttonStyle(.plain)
                 
                 Button(action: { onSave(token) }) {
@@ -845,19 +933,25 @@ struct TokenInputSheet: View {
                         }
                     }
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(token.isEmpty ? theme.textTertiary : .white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
                     .background(
                         Group {
                             if token.isEmpty {
-                                AnyView(theme.inputBackground)
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(theme.surfaceSecondary)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(theme.border, lineWidth: 1)
+                                    )
                             } else {
-                                AnyView(theme.accentGradient)
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(theme.accentGradient)
                             }
                         }
                     )
-                    .cornerRadius(8)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .disabled(token.isEmpty || isValidating)
@@ -923,26 +1017,33 @@ struct GistInputSheet: View {
                     .padding(.vertical, 10)
                     .background(theme.inputBackground)
                     .cornerRadius(8)
+                    .contentShape(Rectangle())
                     .buttonStyle(.plain)
                 
-                Button("Bind") {
+                Button(L10n.bind) {
                     onSave()
                     isPresented = false
                 }
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(gistId.isEmpty ? theme.textTertiary : .white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .background(
                     Group {
                         if gistId.isEmpty {
-                            AnyView(theme.inputBackground)
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(theme.surfaceSecondary)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(theme.border, lineWidth: 1)
+                                )
                         } else {
-                            AnyView(theme.accentGradient)
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(theme.accentGradient)
                         }
                     }
                 )
-                .cornerRadius(8)
+                .contentShape(Rectangle())
                 .buttonStyle(.plain)
                 .disabled(gistId.isEmpty)
             }

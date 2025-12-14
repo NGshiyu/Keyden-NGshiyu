@@ -54,19 +54,29 @@ struct Token: Identifiable, Codable, Equatable {
         self.updatedAt = updatedAt
     }
     
+    /// Clean string by removing control characters
+    private func cleanDisplayString(_ str: String) -> String {
+        str.trimmingCharacters(in: .whitespacesAndNewlines)
+           .replacingOccurrences(of: "\n", with: "")
+           .replacingOccurrences(of: "\r", with: "")
+    }
+    
     /// Display name for the token
     var displayName: String {
         if !label.isEmpty {
-            return label
+            return cleanDisplayString(label)
         }
-        if !issuer.isEmpty && !account.isEmpty {
-            return "\(issuer) (\(account))"
+        let cleanIssuer = cleanDisplayString(issuer)
+        let cleanAccount = cleanDisplayString(account)
+        
+        if !cleanIssuer.isEmpty && !cleanAccount.isEmpty {
+            return "\(cleanIssuer) (\(cleanAccount))"
         }
-        if !issuer.isEmpty {
-            return issuer
+        if !cleanIssuer.isEmpty {
+            return cleanIssuer
         }
-        if !account.isEmpty {
-            return account
+        if !cleanAccount.isEmpty {
+            return cleanAccount
         }
         return "Unknown"
     }
@@ -182,6 +192,14 @@ struct OTPAuthURL {
     var period: Int = 30
     var algorithm: TOTPAlgorithm = .sha1
     
+    /// Clean string by removing control characters (newlines, tabs, etc.)
+    private static func cleanString(_ str: String) -> String {
+        str.trimmingCharacters(in: .whitespacesAndNewlines)
+           .replacingOccurrences(of: "\n", with: "")
+           .replacingOccurrences(of: "\r", with: "")
+           .replacingOccurrences(of: "\t", with: " ")
+    }
+    
     /// Parse otpauth:// URL
     static func parse(_ urlString: String) -> OTPAuthURL? {
         guard let url = URL(string: urlString),
@@ -196,11 +214,20 @@ struct OTPAuthURL {
         // Parse label (path component)
         let path = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         if path.contains(":") {
-            let parts = path.split(separator: ":", maxSplits: 1)
-            result.issuer = String(parts[0]).removingPercentEncoding ?? String(parts[0])
-            result.account = String(parts[1]).removingPercentEncoding ?? String(parts[1])
+            let parts = path.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+            if parts.count >= 2 {
+                let rawIssuer = String(parts[0]).removingPercentEncoding ?? String(parts[0])
+                let rawAccount = String(parts[1]).removingPercentEncoding ?? String(parts[1])
+                result.issuer = cleanString(rawIssuer)
+                result.account = cleanString(rawAccount)
+            } else if parts.count == 1 {
+                // Only one part (e.g., "issuer:" or ":account")
+                let rawAccount = String(parts[0]).removingPercentEncoding ?? String(parts[0])
+                result.account = cleanString(rawAccount)
+            }
         } else {
-            result.account = path.removingPercentEncoding ?? path
+            let rawAccount = path.removingPercentEncoding ?? path
+            result.account = cleanString(rawAccount)
         }
         
         // Parse query parameters
@@ -215,7 +242,7 @@ struct OTPAuthURL {
                 result.secret = item.value?.uppercased().replacingOccurrences(of: " ", with: "") ?? ""
             case "issuer":
                 if result.issuer.isEmpty {
-                    result.issuer = item.value ?? ""
+                    result.issuer = cleanString(item.value ?? "")
                 }
             case "digits":
                 result.digits = Int(item.value ?? "6") ?? 6

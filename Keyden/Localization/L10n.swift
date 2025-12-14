@@ -165,6 +165,7 @@ class LanguageManager: ObservableObject {
         "syncing": "Syncing...",
         "push_success": "Pushed successfully",
         "pull_success": "Pulled successfully",
+        "data_synced": "Data synced",
         "pull_confirm_title": "Pull from Backup",
         "pull_confirm_message": "This will replace all local accounts with the backup. Continue?",
         "token_saved": "Token saved successfully",
@@ -233,6 +234,14 @@ enum L10n {
     static var openSettings: String { manager.localizedString(forKey: "open_settings") }
     static var enterManually: String { manager.localizedString(forKey: "enter_manually") }
     static var confirmAdd: String { manager.localizedString(forKey: "confirm_add") }
+    static var addAndNext: String { manager.localizedString(forKey: "add_and_next") }
+    static func addAll(_ count: Int) -> String {
+        manager.localizedString(forKey: "add_all").replacingOccurrences(of: "%d", with: "\(count)")
+    }
+    static func addedCount(_ count: Int) -> String {
+        manager.localizedString(forKey: "added_count").replacingOccurrences(of: "%d", with: "\(count)")
+    }
+    static var skip: String { manager.localizedString(forKey: "skip") }
     static var invalidFormat: String { manager.localizedString(forKey: "invalid_format") }
     static var noQRCodeFound: String { manager.localizedString(forKey: "no_qr_code_found") }
     static var notA2FACode: String { manager.localizedString(forKey: "not_a_2fa_code") }
@@ -275,6 +284,7 @@ enum L10n {
     static var autoSyncDesc: String { manager.localizedString(forKey: "auto_sync_desc") }
     static var gistId: String { manager.localizedString(forKey: "gist_id") }
     static var willCreateOnSync: String { manager.localizedString(forKey: "will_create_on_sync") }
+    static var bind: String { manager.localizedString(forKey: "bind") }
     static var bindExisting: String { manager.localizedString(forKey: "bind_existing") }
     static var manualSync: String { manager.localizedString(forKey: "manual_sync") }
     static var push: String { manager.localizedString(forKey: "push") }
@@ -283,6 +293,7 @@ enum L10n {
     static var syncing: String { manager.localizedString(forKey: "syncing") }
     static var pushSuccess: String { manager.localizedString(forKey: "push_success") }
     static var pullSuccess: String { manager.localizedString(forKey: "pull_success") }
+    static var dataSynced: String { manager.localizedString(forKey: "data_synced") }
     static var pullConfirmTitle: String { manager.localizedString(forKey: "pull_confirm_title") }
     static var pullConfirmMessage: String { manager.localizedString(forKey: "pull_confirm_message") }
     static var tokenSaved: String { manager.localizedString(forKey: "token_saved") }
@@ -305,6 +316,18 @@ enum L10n {
     static var importSuccess: String { manager.localizedString(forKey: "import_success") }
     static var securityWarning: String { manager.localizedString(forKey: "security_warning") }
     static var unencryptedJson: String { manager.localizedString(forKey: "unencrypted_json") }
+    
+    // MARK: - Management
+    static var manageAccounts: String { manager.localizedString(forKey: "manage_accounts") }
+    static var editAccount: String { manager.localizedString(forKey: "edit_account") }
+    static var deleteAccount: String { manager.localizedString(forKey: "delete_account") }
+    static func deleteConfirmMessage(_ name: String) -> String {
+        manager.localizedString(forKey: "delete_confirm_message").replacingOccurrences(of: "%@", with: name)
+    }
+    static var name: String { manager.localizedString(forKey: "name") }
+    static var issuer: String { manager.localizedString(forKey: "issuer") }
+    static var saveBackupMessage: String { manager.localizedString(forKey: "save_backup_message") }
+    static var openInBrowser: String { manager.localizedString(forKey: "open_in_browser") }
 }
 
 // MARK: - RawRepresentable for AppStorage

@@ -131,6 +131,7 @@ struct MenuBarContentView: View {
             // Toast overlay
             ToastView(theme: theme)
                 .padding(.bottom, 60)
+                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: toastManager.isShowing)
         }
         .frame(width: 340, height: 520)
         .background(theme.background)
@@ -307,26 +308,15 @@ struct MenuBarContentView: View {
             
             Spacer()
             
-            // Sync status
-            if gistService.isConfigured {
-                if gistService.isSyncing {
-                    HStack(spacing: 4) {
-                        ProgressView()
-                            .scaleEffect(0.45)
-                        Text(L10n.syncing)
-                            .font(.system(size: 10))
-                    }
-                    .foregroundColor(theme.textTertiary)
-                } else if let lastSync = gistService.lastSyncDate {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.icloud.fill")
-                            .font(.system(size: 10))
-                        Text(lastSync, style: .relative)
-                            .font(.system(size: 10))
-                    }
-                    .foregroundColor(theme.success)
-                }
+            // Sync in progress indicator - fixed space to prevent layout shift
+            HStack(spacing: 4) {
+                ProgressView()
+                    .scaleEffect(0.45)
+                Text(L10n.syncing)
+                    .font(.system(size: 10))
             }
+            .foregroundColor(theme.textTertiary)
+            .opacity(gistService.isConfigured && gistService.isSyncing ? 1 : 0)
             
             Spacer()
             
@@ -373,6 +363,7 @@ struct TokenRow: View {
     @State private var remainingSeconds = 30
     @State private var timer: Timer?
     @State private var isHovering = false
+    @State private var isInitialized = false
     
     private var isCopied: Bool { copiedId == token.id }
     
@@ -386,6 +377,21 @@ struct TokenRow: View {
         return theme.accent
     }
     
+    /// Clean display string by removing control characters
+    private func cleanText(_ str: String) -> String {
+        str.trimmingCharacters(in: .whitespacesAndNewlines)
+           .replacingOccurrences(of: "\n", with: "")
+           .replacingOccurrences(of: "\r", with: "")
+    }
+    
+    private var displayTitle: String {
+        cleanText(token.issuer.isEmpty ? token.displayName : token.issuer)
+    }
+    
+    private var displayAccount: String {
+        cleanText(token.account)
+    }
+    
     var body: some View {
         HStack(spacing: 10) {
             // Left: Service icon (fixed 32x32)
@@ -395,11 +401,10 @@ struct TokenRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 // Title with optional pin
                 HStack(spacing: 4) {
-                    Text(token.issuer.isEmpty ? token.displayName : token.issuer)
+                    Text(displayTitle)
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(theme.textPrimary)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.9)
                         .layoutPriority(1)
                     
                     if token.isPinned {
@@ -416,12 +421,11 @@ struct TokenRow: View {
                     .foregroundColor(isCopied ? theme.success : theme.textPrimary)
                 
                 // Account
-                if !token.account.isEmpty {
-                    Text(token.account)
+                if !displayAccount.isEmpty {
+                    Text(displayAccount)
                         .font(.system(size: 10))
                         .foregroundColor(theme.textSecondary)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.9)
                         .layoutPriority(1)
                 }
             }
@@ -440,14 +444,13 @@ struct TokenRow: View {
                             style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
                         )
                         .rotationEffect(.degrees(-90))
-                        .animation(.linear(duration: 1), value: remainingSeconds)
                     
-                    // Time indicator
                     Text("\(remainingSeconds)")
-                        .font(.system(size: 7, weight: .bold, design: .rounded))
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
                         .foregroundColor(progressColor)
                 }
                 .frame(width: 22, height: 22)
+                .animation(isInitialized ? .linear(duration: 1) : nil, value: remainingSeconds)
                 
                 Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
                     .font(.system(size: 10, weight: .medium))
@@ -515,7 +518,7 @@ struct TokenRow: View {
                 )
                 .shadow(color: iconGradientColors[0].opacity(0.4), radius: 3, x: 0, y: 2)
             
-            Text(String((token.issuer.isEmpty ? token.displayName : token.issuer).prefix(1)).uppercased())
+            Text(String(displayTitle.prefix(1)).uppercased())
                 .font(.system(size: 14, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
         }
@@ -524,7 +527,7 @@ struct TokenRow: View {
     }
     
     private var iconGradientColors: [Color] {
-        let name = token.issuer.isEmpty ? token.displayName : token.issuer
+        let name = displayTitle
         let hash = abs(name.hashValue)
         let hue1 = Double(hash % 360) / 360.0
         let hue2 = Double((hash + 40) % 360) / 360.0
@@ -579,7 +582,14 @@ struct TokenRow: View {
     }
     
     private func startTimer() {
+        // Initialize without animation
         updateCode()
+        
+        // Enable animation after a brief delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            isInitialized = true
+        }
+        
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             updateCode()
         }
@@ -588,6 +598,7 @@ struct TokenRow: View {
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
+        isInitialized = false
     }
     
     private func updateCode() {

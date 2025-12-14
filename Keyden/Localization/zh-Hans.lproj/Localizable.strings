@@ -39,6 +39,10 @@
 "open_settings" = "打开设置";
 "enter_manually" = "手动输入";
 "confirm_add" = "确认添加";
+"add_and_next" = "添加并继续";
+"add_all" = "全部添加 (%d)";
+"added_count" = "已添加 %d 个账户";
+"skip" = "跳过";
 "invalid_format" = "格式无效，请使用 otpauth:// 链接或 Base32 密钥";
 "no_qr_code_found" = "未在图片中找到二维码";
 "not_a_2fa_code" = "该二维码不是 2FA 验证码";
@@ -81,6 +85,7 @@
 "auto_sync_desc" = "更改时自动同步到云端";
 "gist_id" = "Gist ID";
 "will_create_on_sync" = "首次同步时自动创建";
+"bind" = "绑定";
 "bind_existing" = "绑定已有";
 "manual_sync" = "手动同步";
 "push" = "推送";
@@ -89,6 +94,7 @@
 "syncing" = "同步中...";
 "push_success" = "推送成功";
 "pull_success" = "拉取成功";
+"data_synced" = "数据已同步";
 "pull_confirm_title" = "从云端拉取";
 "pull_confirm_message" = "这将用云端数据替换本地所有账户，确定继续？";
 "token_saved" = "令牌保存成功";
@@ -111,4 +117,14 @@
 "import_success" = "导入成功";
 "security_warning" = "导出的文件包含未加密的密钥，请妥善保管！";
 "unencrypted_json" = "未加密的 JSON 格式";
+
+// Management
+"manage_accounts" = "管理账户";
+"edit_account" = "编辑账户";
+"delete_account" = "删除账户";
+"delete_confirm_message" = "确定要删除「%@」吗？";
+"name" = "名称";
+"issuer" = "发行商";
+"save_backup_message" = "选择保存备份的位置";
+"open_in_browser" = "在浏览器中打开";
 

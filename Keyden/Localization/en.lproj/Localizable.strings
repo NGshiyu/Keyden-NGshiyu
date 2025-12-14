@@ -39,6 +39,10 @@
 "open_settings" = "Open Settings";
 "enter_manually" = "Enter details manually";
 "confirm_add" = "Confirm & Add";
+"add_and_next" = "Add & Next";
+"add_all" = "Add All (%d)";
+"added_count" = "Added %d accounts";
+"skip" = "Skip";
 "invalid_format" = "Invalid format. Use otpauth:// URL or Base32 secret";
 "no_qr_code_found" = "No QR code found in image";
 "not_a_2fa_code" = "QR code is not a 2FA code";
@@ -81,6 +85,7 @@
 "auto_sync_desc" = "Sync automatically when changes are made";
 "gist_id" = "Gist ID";
 "will_create_on_sync" = "Will be created on first sync";
+"bind" = "Bind";
 "bind_existing" = "Bind Existing";
 "manual_sync" = "Manual Sync";
 "push" = "Push";
@@ -89,6 +94,7 @@
 "syncing" = "Syncing...";
 "push_success" = "Pushed successfully";
 "pull_success" = "Pulled successfully";
+"data_synced" = "Data synced";
 "pull_confirm_title" = "Pull from Backup";
 "pull_confirm_message" = "This will replace all local accounts with the backup. Continue?";
 "token_saved" = "Token saved successfully";
@@ -111,4 +117,14 @@
 "import_success" = "Imported successfully";
 "security_warning" = "Exported files contain unencrypted secret keys. Keep them secure!";
 "unencrypted_json" = "Unencrypted JSON format";
+
+// Management
+"manage_accounts" = "Manage Accounts";
+"edit_account" = "Edit Account";
+"delete_account" = "Delete Account";
+"delete_confirm_message" = "Are you sure you want to delete \"%@\"?";
+"name" = "Name";
+"issuer" = "Issuer";
+"save_backup_message" = "Choose where to save your backup";
+"open_in_browser" = "Open in browser";
 

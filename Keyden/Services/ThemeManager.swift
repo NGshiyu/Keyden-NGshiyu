@@ -145,6 +145,13 @@ struct ModernTheme {
             : Color(red: 0.98, green: 0.98, blue: 0.99)
     }
     
+    /// Hover state background
+    var hoverBackground: Color {
+        isDark
+            ? Color(white: 0.18)
+            : Color(white: 0.94)
+    }
+    
     // MARK: - Accent Colors
     
     /// Primary accent - vibrant indigo-blue
