@@ -20,6 +20,7 @@
 - 🔐 **安全存储** - TOTP 密钥加密存储在 macOS Keychain
 - 📋 **一键复制** - 点击即可复制验证码
 - 📷 **二维码支持** - 扫描二维码添加账户，支持导出二维码图片
+- 📥 **批量导入** - 支持通过剪贴板或输入框批量导入多个账户
 - ☁️ **GitHub Gist 同步** - 可选通过私有 GitHub Gist 同步
 - 💾 **离线优先** - 无需联网，数据本地加密存储
 - 🎨 **主题支持** - 明暗模式，跟随系统偏好设置
@@ -79,7 +80,7 @@ make dmg
 # 或构建特定架构版本
 make build-arm      # 仅 Apple Silicon
 make build-intel    # 仅 Intel
-make build-all.     # 通用
+make build-all      # 通用
 
 # 清理构建产物
 make clean
@@ -91,6 +92,15 @@ make clean
 - CryptoKit（TOTP 生成）
 - Keychain Services（安全存储）
 - Vision Framework（二维码扫描）
+
+## 捐赠
+
+如果 Keyden 对你有帮助，欢迎请我喝杯咖啡 ☕
+
+<p align="center">
+  <img src="assets/alipay.png" width="200" alt="支付宝" />
+  <img src="assets/wepay.png" width="200" alt="微信支付" />
+</p>
 
 ## Star History
 

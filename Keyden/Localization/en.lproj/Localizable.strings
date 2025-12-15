@@ -47,6 +47,7 @@
 "no_qr_code_found" = "No QR code found in image";
 "not_a_2fa_code" = "QR code is not a 2FA code";
 "secret_required" = "Secret key is required";
+"duplicate_account" = "This account already exists";
 "service" = "Service";
 "account" = "Account";
 "algorithm" = "Algorithm";

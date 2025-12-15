@@ -47,6 +47,7 @@
 "no_qr_code_found" = "未在图片中找到二维码";
 "not_a_2fa_code" = "该二维码不是 2FA 验证码";
 "secret_required" = "密钥不能为空";
+"duplicate_account" = "该账户已存在";
 "service" = "服务";
 "account" = "账户";
 "algorithm" = "算法";

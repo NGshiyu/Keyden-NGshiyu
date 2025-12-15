@@ -20,6 +20,7 @@ A clean and elegant macOS menu bar TOTP authenticator.
 - 🔐 **Secure Storage** - TOTP secrets stored in macOS Keychain with encryption
 - 📋 **One-Click Copy** - Click to copy verification codes instantly
 - 📷 **QR Code Support** - Scan QR codes or export tokens as QR images
+- 📥 **Batch Import** - Import multiple accounts via clipboard or input field
 - ☁️ **GitHub Gist Sync** - Optional sync via private GitHub Gist
 - 💾 **Offline First** - Works without internet, all data encrypted locally
 - 🎨 **Theme Support** - Light/Dark mode, follows system preference
@@ -91,6 +92,15 @@ make clean
 - CryptoKit (TOTP generation)
 - Keychain Services (secure storage)
 - Vision Framework (QR code scanning)
+
+## Donate
+
+If you find Keyden helpful, consider buying me a coffee ☕
+
+<p align="center">
+  <img src="assets/alipay.png" width="200" alt="Alipay" />
+  <img src="assets/wepay.png" width="200" alt="WeChat Pay" />
+</p>
 
 ## Star History
 

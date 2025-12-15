@@ -396,11 +396,28 @@ struct AddTokenView: View {
         
         // Parse all valid tokens
         var tokens: [PendingToken] = []
+        var seenSecrets: Set<String> = []  // For deduplication within input
         var invalidCount = 0
+        var duplicateCount = 0
         
         for line in lines {
             if line.lowercased().hasPrefix("otpauth://") {
                 if let url = OTPAuthURL.parse(line) {
+                    let normalizedSecret = url.secret.uppercased().replacingOccurrences(of: " ", with: "")
+                    
+                    // Check for duplicates within input
+                    if seenSecrets.contains(normalizedSecret) {
+                        duplicateCount += 1
+                        continue
+                    }
+                    
+                    // Check for duplicates with existing vault
+                    if vaultService.isDuplicate(secret: normalizedSecret) {
+                        duplicateCount += 1
+                        continue
+                    }
+                    
+                    seenSecrets.insert(normalizedSecret)
                     tokens.append(PendingToken(
                         issuer: url.issuer,
                         account: url.account,
@@ -416,6 +433,19 @@ struct AddTokenView: View {
                 // Try as Base32 secret
                 let cleaned = line.uppercased().replacingOccurrences(of: " ", with: "")
                 if TOTPService.shared.isValidBase32(cleaned) {
+                    // Check for duplicates within input
+                    if seenSecrets.contains(cleaned) {
+                        duplicateCount += 1
+                        continue
+                    }
+                    
+                    // Check for duplicates with existing vault
+                    if vaultService.isDuplicate(secret: cleaned) {
+                        duplicateCount += 1
+                        continue
+                    }
+                    
+                    seenSecrets.insert(cleaned)
                     tokens.append(PendingToken(
                         issuer: "",
                         account: "",
@@ -432,7 +462,12 @@ struct AddTokenView: View {
         
         // Handle results
         if tokens.isEmpty {
-            errorMessage = L10n.invalidFormat
+            if duplicateCount > 0 {
+                // All duplicates - silently close
+                isPresented = false
+            } else {
+                errorMessage = L10n.invalidFormat
+            }
         } else if tokens.count == 1 {
             // Single token - use existing confirm flow
             pendingToken = tokens.first
@@ -440,9 +475,9 @@ struct AddTokenView: View {
             // Multiple tokens - use batch confirm flow
             pendingTokens = tokens
             currentBatchIndex = 0
-            if invalidCount > 0 {
-                // Some lines were invalid, but we have valid ones
-                print("[Keyden] Parsed \(tokens.count) tokens, \(invalidCount) invalid lines skipped")
+            if invalidCount > 0 || duplicateCount > 0 {
+                // Some lines were invalid or duplicated, but we have valid ones
+                print("[Keyden] Parsed \(tokens.count) tokens, \(invalidCount) invalid, \(duplicateCount) duplicates skipped")
             }
         }
     }
@@ -561,7 +596,22 @@ struct AddTokenView: View {
     private func handleScanResult(_ result: QRScanResult) {
         switch result {
         case .success(let urls):
-            if let url = urls.first {
+            // Filter out duplicates
+            let uniqueUrls = urls.filter { url in
+                let normalizedSecret = url.secret.uppercased().replacingOccurrences(of: " ", with: "")
+                return !vaultService.isDuplicate(secret: normalizedSecret)
+            }
+            
+            if uniqueUrls.isEmpty {
+                if !urls.isEmpty {
+                    // All scanned codes are duplicates - silently close
+                    isPresented = false
+                } else {
+                    errorMessage = L10n.noQRCodeFound
+                }
+            } else if uniqueUrls.count == 1 {
+                // Single token - use existing confirm flow
+                let url = uniqueUrls.first!
                 pendingToken = PendingToken(
                     issuer: url.issuer,
                     account: url.account,
@@ -572,7 +622,19 @@ struct AddTokenView: View {
                 )
                 errorMessage = nil
             } else {
-                errorMessage = L10n.noQRCodeFound
+                // Multiple tokens - use batch confirm flow
+                pendingTokens = uniqueUrls.map { url in
+                    PendingToken(
+                        issuer: url.issuer,
+                        account: url.account,
+                        secret: url.secret,
+                        digits: url.digits,
+                        period: url.period,
+                        algorithm: url.algorithm
+                    )
+                }
+                currentBatchIndex = 0
+                errorMessage = nil
             }
         case .noQRCode:
             errorMessage = L10n.noQRCodeFound
@@ -586,6 +648,12 @@ struct AddTokenView: View {
     private func saveToken(_ pending: PendingToken) {
         guard !pending.secret.isEmpty else {
             errorMessage = L10n.secretRequired
+            return
+        }
+        
+        // Check for duplicate before trying to add - silently close if duplicate
+        if vaultService.isDuplicate(secret: pending.secret) {
+            isPresented = false
             return
         }
         
@@ -618,6 +686,12 @@ struct AddTokenView: View {
         
         let pending = pendingTokens[currentBatchIndex]
         guard !pending.secret.isEmpty else {
+            skipCurrentBatchToken()
+            return
+        }
+        
+        // Check for duplicate before trying to add - silently skip
+        if vaultService.isDuplicate(secret: pending.secret) {
             skipCurrentBatchToken()
             return
         }
@@ -668,10 +742,17 @@ struct AddTokenView: View {
     private func saveAllBatchTokens() {
         isProcessing = true
         var addedCount = 0
+        var skippedCount = 0
         
         for i in currentBatchIndex..<pendingTokens.count {
             let pending = pendingTokens[i]
             guard !pending.secret.isEmpty else { continue }
+            
+            // Check for duplicate before trying to add
+            if vaultService.isDuplicate(secret: pending.secret) {
+                skippedCount += 1
+                continue
+            }
             
             let label = pending.issuer.isEmpty ? pending.account : pending.issuer
             let token = Token(
@@ -688,6 +769,7 @@ struct AddTokenView: View {
                 try vaultService.addToken(token)
                 addedCount += 1
             } catch {
+                skippedCount += 1
                 print("[Keyden] Failed to add token: \(error.localizedDescription)")
             }
         }
@@ -700,6 +782,7 @@ struct AddTokenView: View {
         if addedCount > 0 {
             ToastManager.shared.show(L10n.addedCount(addedCount))
         }
+        // Silently close if all were duplicates (no toast needed)
     }
 }
 

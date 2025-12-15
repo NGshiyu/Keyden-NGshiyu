@@ -172,8 +172,19 @@ final class VaultService: ObservableObject {
     
     // MARK: - Token Operations
     
+    /// Check if a token with the same secret already exists
+    func isDuplicate(secret: String) -> Bool {
+        let normalizedSecret = secret.uppercased().replacingOccurrences(of: " ", with: "")
+        return vault.tokens.contains { $0.secret == normalizedSecret }
+    }
+    
     /// Add a new token
     func addToken(_ token: Token) throws {
+        // Check for duplicate
+        if isDuplicate(secret: token.secret) {
+            throw VaultError.duplicateToken
+        }
+        
         var newToken = token
         newToken.sortOrder = vault.tokens.count
         newToken.updatedAt = Date()
@@ -222,6 +233,7 @@ enum VaultError: LocalizedError {
     case corruptedData
     case tokenNotFound
     case noVaultFile
+    case duplicateToken
     
     var errorDescription: String? {
         switch self {
@@ -235,6 +247,8 @@ enum VaultError: LocalizedError {
             return "Token not found"
         case .noVaultFile:
             return "Vault file not found"
+        case .duplicateToken:
+            return L10n.duplicateAccount
         }
     }
 }
