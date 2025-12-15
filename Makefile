@@ -50,6 +50,9 @@ build-universal: $(BUILD_DIR)
 		-archivePath $(ARCHIVE_PATH) \
 		ARCHS="arm64 x86_64" \
 		ONLY_ACTIVE_ARCH=NO \
+		CODE_SIGN_IDENTITY="" \
+		CODE_SIGNING_REQUIRED=NO \
+		CODE_SIGNING_ALLOWED=NO \
 		archive
 	@echo "📦 导出应用..."
 	@# 先清理目标目录，避免嵌套问题
@@ -63,6 +66,9 @@ build-universal: $(BUILD_DIR)
 		mv "$(BUILD_DIR)/universal/$(PROJECT_NAME).app" "$(BUILD_DIR)/$(PROJECT_NAME)-universal.app" && \
 		rm -rf "$(BUILD_DIR)/universal" || \
 		cp -R "$(ARCHIVE_PATH)/Products/Applications/$(PROJECT_NAME).app" "$(BUILD_DIR)/$(PROJECT_NAME)-universal.app"
+	@echo "🔏 签名应用..."
+	@codesign --force --deep --sign - "$(BUILD_DIR)/$(PROJECT_NAME)-universal.app"
+	@xattr -cr "$(BUILD_DIR)/$(PROJECT_NAME)-universal.app"
 	@echo "✅ 通用版本构建完成"
 
 # 构建 Intel 版本 (x86_64)
@@ -76,10 +82,16 @@ build-intel: $(BUILD_DIR)
 		-archivePath $(BUILD_DIR)/$(PROJECT_NAME)-intel.xcarchive \
 		ARCHS="x86_64" \
 		ONLY_ACTIVE_ARCH=NO \
+		CODE_SIGN_IDENTITY="" \
+		CODE_SIGNING_REQUIRED=NO \
+		CODE_SIGNING_ALLOWED=NO \
 		archive
 	@echo "📦 导出应用..."
 	@rm -rf "$(BUILD_DIR)/$(PROJECT_NAME)-x86_64.app"
 	cp -R "$(BUILD_DIR)/$(PROJECT_NAME)-intel.xcarchive/Products/Applications/$(PROJECT_NAME).app" "$(BUILD_DIR)/$(PROJECT_NAME)-x86_64.app"
+	@echo "🔏 签名应用..."
+	@codesign --force --deep --sign - "$(BUILD_DIR)/$(PROJECT_NAME)-x86_64.app"
+	@xattr -cr "$(BUILD_DIR)/$(PROJECT_NAME)-x86_64.app"
 	@echo "✅ Intel 版本构建完成"
 
 # 构建 Apple Silicon 版本 (arm64)
@@ -93,10 +105,16 @@ build-arm: $(BUILD_DIR)
 		-archivePath $(BUILD_DIR)/$(PROJECT_NAME)-arm.xcarchive \
 		ARCHS="arm64" \
 		ONLY_ACTIVE_ARCH=NO \
+		CODE_SIGN_IDENTITY="" \
+		CODE_SIGNING_REQUIRED=NO \
+		CODE_SIGNING_ALLOWED=NO \
 		archive
 	@echo "📦 导出应用..."
 	@rm -rf "$(BUILD_DIR)/$(PROJECT_NAME)-arm64.app"
 	cp -R "$(BUILD_DIR)/$(PROJECT_NAME)-arm.xcarchive/Products/Applications/$(PROJECT_NAME).app" "$(BUILD_DIR)/$(PROJECT_NAME)-arm64.app"
+	@echo "🔏 签名应用..."
+	@codesign --force --deep --sign - "$(BUILD_DIR)/$(PROJECT_NAME)-arm64.app"
+	@xattr -cr "$(BUILD_DIR)/$(PROJECT_NAME)-arm64.app"
 	@echo "✅ Apple Silicon 版本构建完成"
 
 # 构建所有架构版本
