@@ -99,6 +99,7 @@ If you find Keyden helpful, consider buying me a coffee ☕
 
 <p align="center">
   <img src="assets/alipay.png" width="200" alt="Alipay" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="assets/wepay.png" width="200" alt="WeChat Pay" />
 </p>
 

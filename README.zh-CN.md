@@ -99,6 +99,7 @@ make clean
 
 <p align="center">
   <img src="assets/alipay.png" width="200" alt="支付宝" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="assets/wepay.png" width="200" alt="微信支付" />
 </p>
 
