@@ -79,6 +79,7 @@ make dmg
 # 或构建特定架构版本
 make build-arm      # 仅 Apple Silicon
 make build-intel    # 仅 Intel
+make build-all.     # 通用
 
 # 清理构建产物
 make clean

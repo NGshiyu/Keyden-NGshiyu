@@ -22,6 +22,15 @@ DMG_BACKGROUND_COLOR = \#FFFFFF
 .PHONY: all
 all: dmg
 
+# 更新网页版本号
+.PHONY: update-docs-version
+update-docs-version:
+	@echo "📝 更新网页版本号为 $(VERSION)..."
+	@# 使用正则表达式匹配任意版本号格式并替换
+	@sed -i '' 's/Version [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/Version $(VERSION)/g' docs/index.html
+	@sed -i '' 's/版本 [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/版本 $(VERSION)/g' docs/index.html
+	@echo "✅ 网页版本号更新完成"
+
 # 清理构建产物
 .PHONY: clean
 clean:
@@ -41,7 +50,7 @@ $(DIST_DIR):
 # 构建通用版本 (Universal - arm64 + x86_64)
 .PHONY: build build-universal
 build: build-universal
-build-universal: $(BUILD_DIR)
+build-universal: $(BUILD_DIR) update-docs-version
 	@echo "🔨 构建通用版本 (Universal)..."
 	xcodebuild -project $(PROJECT_NAME).xcodeproj \
 		-scheme $(SCHEME) \
@@ -73,7 +82,7 @@ build-universal: $(BUILD_DIR)
 
 # 构建 Intel 版本 (x86_64)
 .PHONY: build-intel
-build-intel: $(BUILD_DIR)
+build-intel: $(BUILD_DIR) update-docs-version
 	@echo "🔨 构建 Intel 版本 (x86_64)..."
 	xcodebuild -project $(PROJECT_NAME).xcodeproj \
 		-scheme $(SCHEME) \
@@ -96,7 +105,7 @@ build-intel: $(BUILD_DIR)
 
 # 构建 Apple Silicon 版本 (arm64)
 .PHONY: build-arm
-build-arm: $(BUILD_DIR)
+build-arm: $(BUILD_DIR) update-docs-version
 	@echo "🔨 构建 Apple Silicon 版本 (arm64)..."
 	xcodebuild -project $(PROJECT_NAME).xcodeproj \
 		-scheme $(SCHEME) \
@@ -190,6 +199,9 @@ help:
 	@echo ""
 	@echo "  make clean          - 清理构建产物"
 	@echo "  make help           - 显示此帮助信息"
+	@echo ""
+	@echo "  make update-docs-version  - 更新网页版本号"
+	@echo "  make reset-docs-version   - 恢复网页版本号占位符"
 	@echo ""
 	@echo "输出文件:"
 	@echo "  dist/$(PROJECT_NAME)-x.x.x-universal.dmg  - 通用版本"

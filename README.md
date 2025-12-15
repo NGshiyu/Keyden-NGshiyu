@@ -79,6 +79,7 @@ make dmg
 # Or build for specific architecture
 make build-arm      # Apple Silicon only
 make build-intel    # Intel only
+make build-all      # Universal
 
 # Clean build artifacts
 make clean

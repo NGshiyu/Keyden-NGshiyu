@@ -143,8 +143,13 @@
   <section class="container mx-auto px-4 py-20">
     <div class="max-w-5xl mx-auto">
       <div class="bg-gradient-to-br from-secondary to-muted rounded-2xl p-8 md:p-12 shadow-lg">
-        <div class="aspect-video bg-white rounded-xl shadow-2xl flex items-center justify-center border border-border">
-          <img src="/placeholder.svg?height=600&width=1000" alt="Keyden App Screenshot" class="w-full h-full object-cover rounded-xl">
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="bg-white rounded-xl shadow-2xl overflow-hidden border border-border">
+            <img src="screenshot-light.png" alt="Keyden App Screenshot - Light Mode" class="w-full h-auto object-contain">
+          </div>
+          <div class="bg-gray-900 rounded-xl shadow-2xl overflow-hidden border border-gray-700">
+            <img src="screenshot-dark.png" alt="Keyden App Screenshot - Dark Mode" class="w-full h-auto object-contain">
+          </div>
         </div>
       </div>
     </div>
@@ -256,7 +261,7 @@
         </a>
       </div>
       <p class="mt-6 text-sm opacity-75" data-i18n="download-version">
-        Version 1.0 • macOS 11.0 or later • Free & Open Source
+        Version 1.0.1 • macOS 11.0 or later • Free & Open Source
       </p>
     </div>
   </section>
@@ -309,7 +314,7 @@
         'download-title': 'Ready to Get Started?',
         'download-subtitle': 'Download Keyden for free and take control of your two-factor authentication',
         'download-latest': 'Download Latest Release',
-        'download-version': 'Version 1.0 • macOS 11.0 or later • Free & Open Source'
+        'download-version': 'Version 1.0.1 • macOS 12.0 or later • Free & Open Source'
       },
       zh: {
         'features': '功能特性',
@@ -335,7 +340,7 @@
         'download-title': '准备开始了吗？',
         'download-subtitle': '免费下载 Keyden，掌控您的双因素认证',
         'download-latest': '下载最新版本',
-        'download-version': '版本 1.0 • macOS 11.0 或更高版本 • 免费开源'
+        'download-version': '版本 1.0.1 • macOS 12.0+ 或更高版本 • 免费开源'
       }
     };
 
@@ -354,7 +359,10 @@
     }
 
     document.getElementById('langToggle').addEventListener('click', () => {
-      updateLanguage(currentLang === 'en' ? 'zh' : 'en');
+      const newLang = currentLang === 'en' ? 'zh' : 'en';
+      updateLanguage(newLang);
+      // 保存用户选择
+      localStorage.setItem('keyden-lang', newLang);
     });
 
     // Mobile menu toggle
@@ -376,8 +384,23 @@
       });
     });
 
-    // Initialize with Chinese
-    updateLanguage('zh');
+    // 自动识别语言：优先使用用户保存的选择，否则根据浏览器语言自动判断
+    function detectLanguage() {
+      // 1. 检查用户之前的选择
+      const savedLang = localStorage.getItem('keyden-lang');
+      if (savedLang && (savedLang === 'en' || savedLang === 'zh')) {
+        return savedLang;
+      }
+      // 2. 根据浏览器语言自动判断
+      const browserLang = navigator.language || navigator.userLanguage;
+      if (browserLang && browserLang.toLowerCase().startsWith('zh')) {
+        return 'zh';
+      }
+      return 'en';
+    }
+
+    // 初始化语言
+    updateLanguage(detectLanguage());
   </script>
 </body>
 </html>
