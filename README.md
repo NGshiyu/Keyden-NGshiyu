@@ -117,8 +117,6 @@ If you find Keyden helpful, consider buying me a coffee ☕
 
 ## Star History
 
-## Star History
-
 [![Star History Chart](https://api.star-history.com/svg?repos=tasselx/Keyden&type=date&legend=top-left)](https://www.star-history.com/#tasselx/Keyden&type=date&legend=top-left)
 
 
