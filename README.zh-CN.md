@@ -116,7 +116,7 @@ make clean
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=tasselx/Keyden&type=Date)](https://star-history.com/#tasselx/Keyden&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=tasselx/Keyden&type=Date)](https://star-history.com/tasselx/Keyden&Date)
 
 ## 许可证
 
