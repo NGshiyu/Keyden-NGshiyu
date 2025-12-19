@@ -13,10 +13,10 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/macOS-12.0+-blue?style=flat-square" alt="macOS" />
-  <img src="https://img.shields.io/badge/Swift-5.9-orange?style=flat-square" alt="Swift" />
-  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License" />
-  <a href="https://github.com/tasselx/Keyden/releases"><img src="https://img.shields.io/github/v/release/tasselx/Keyden?style=flat-square" alt="Release" /></a>
+  <img src="https://img.shields.io/badge/macOS-12.0+-blue" alt="macOS" />
+  <img src="https://img.shields.io/badge/Swift-5.9-orange" alt="Swift" />
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
+  <a href="https://github.com/tasselx/Keyden/releases"><img src="https://img.shields.io/github/v/release/tasselx/Keyden" alt="Release" /></a>
 </p>
 
 <p align="center">
