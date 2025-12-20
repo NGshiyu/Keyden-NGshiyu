@@ -59,6 +59,20 @@ brew install --cask tasselx/tap/keyden
 
 Download the latest DMG from [Releases](https://github.com/tasselx/Keyden/releases)
 
+## ⚠️ FAQ
+
+### Screen Recording Permission Issue
+
+Since the app is not signed with a paid Apple Developer account, macOS may not properly recognize the screen recording permission after installing a new version.
+
+**Solution:**
+
+1. Open "System Settings" → "Privacy & Security" → "Screen Recording"
+2. Find Keyden and click "-" to remove the authorization
+3. Reopen Keyden, the system will request permission again
+4. Click "+" to add Keyden and grant permission
+
+
 ---
 
 ## 🚀 Usage

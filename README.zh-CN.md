@@ -59,6 +59,19 @@ brew install --cask tasselx/tap/keyden
 
 从 [Releases](https://github.com/tasselx/Keyden/releases) 下载最新 DMG
 
+## ⚠️ 常见问题
+
+### 截图权限问题
+
+由于没有付费开发者账号签名，每次安装新版本后，macOS 可能无法正确识别应用的截图权限。
+
+**解决方法：**
+
+1. 打开「系统设置」→「隐私与安全性」→「屏幕录制」
+2. 找到 Keyden，点击「-」移除授权
+3. 重新打开 Keyden，系统会再次请求权限
+4. 点击「+」添加 Keyden 并授权
+
 ---
 
 ## 🚀 使用
