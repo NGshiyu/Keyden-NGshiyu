@@ -209,6 +209,12 @@ final class VaultService: ObservableObject {
         try saveVault()
     }
     
+    /// Clear all tokens
+    func clearAllTokens() throws {
+        vault.tokens.removeAll()
+        try saveVault()
+    }
+    
     /// Reorder tokens
     func reorderTokens(from source: IndexSet, to destination: Int) throws {
         vault.tokens.move(fromOffsets: source, toOffset: destination)

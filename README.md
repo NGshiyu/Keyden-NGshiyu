@@ -35,10 +35,11 @@
 | 📋 | **One-Click Copy** - Click to copy verification codes instantly |
 | 📷 | **QR Code Support** - Scan QR codes or export tokens as QR images |
 | 📥 | **Batch Import** - Import multiple accounts via clipboard or input field |
+| 🔄 | **Google Authenticator Migration** - Import accounts from Google Authenticator via migration QR code or link |
 | ☁️ | **GitHub Gist Sync** - Optional sync via private GitHub Gist |
 | 💾 | **Offline First** - Works without internet, all data encrypted locally |
 | 🎨 | **Theme Support** - Light/Dark mode, follows system preference |
-| 🌍 | **Multi-Language** - English and Simplified Chinese |
+| 🌍 | **Multi-Language** - English, Simplified Chinese, Traditional Chinese, Japanese |
 | 📌 | **Pin & Reorder** - Pin frequently used accounts, drag to reorder |
 | 📂 | **Group View** - Group accounts by issuer for better organization |
 | ⌨️ | **Global Hotkey** - Customizable keyboard shortcut (default: ⌘⇧K) |

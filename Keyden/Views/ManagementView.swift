@@ -216,6 +216,7 @@ struct EditTokenView: View {
     @Binding var isPresented: Bool
     @StateObject private var vaultService = VaultService.shared
     @StateObject private var themeManager = ThemeManager.shared
+    @ObservedObject private var languageManager = LanguageManager.shared
     
     @State private var issuer: String = ""
     @State private var account: String = ""
@@ -246,33 +247,99 @@ struct EditTokenView: View {
                 .buttonStyle(.plain)
                 .contentShape(Circle())
             }
-            .padding(14)
+            .padding(16)
             
             Divider().background(theme.separator)
             
-            VStack(spacing: 14) {
-                EditFieldStyled(label: L10n.name, text: $label, theme: theme)
-                EditFieldStyled(label: L10n.issuer, text: $issuer, theme: theme)
-                EditFieldStyled(label: L10n.account, text: $account, theme: theme)
-                
-                if let error = error {
-                    Text(error)
-                        .font(.system(size: 11))
-                        .foregroundColor(.red)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 16) {
+                    // Token preview
+                    HStack(spacing: 12) {
+                        // Icon
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(
+                                    LinearGradient(
+                                        colors: iconGradientColors,
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                            Text(String((label.isEmpty ? token.displayName : label).prefix(1)).uppercased())
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                        .frame(width: 44, height: 44)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(label.isEmpty ? token.displayName : label)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(theme.textPrimary)
+                                .lineLimit(1)
+                            if !account.isEmpty {
+                                Text(account)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(theme.textSecondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(theme.cardBackground)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(theme.border.opacity(0.3), lineWidth: 1)
+                    )
+                    
+                    // Edit fields
+                    VStack(spacing: 14) {
+                        EditFieldStyled(
+                            label: L10n.label,
+                            placeholder: L10n.labelPlaceholder,
+                            text: $label,
+                            theme: theme
+                        )
+                        EditFieldStyled(
+                            label: L10n.service,
+                            placeholder: L10n.servicePlaceholder,
+                            text: $issuer,
+                            theme: theme
+                        )
+                        EditFieldStyled(
+                            label: L10n.account,
+                            placeholder: L10n.accountPlaceholder,
+                            text: $account,
+                            theme: theme
+                        )
+                    }
+                    
+                    if let error = error {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.circle.fill")
+                                .font(.system(size: 11))
+                            Text(error)
+                                .font(.system(size: 11))
+                        }
+                        .foregroundColor(theme.danger)
+                    }
                 }
+                .padding(16)
             }
-            .padding(14)
             
-            Spacer()
+            Divider().background(theme.separator)
             
             // Buttons
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 Button(action: { isPresented = false }) {
                     Text(L10n.cancel)
-                        .font(.system(size: 13))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundColor(theme.textSecondary)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 11)
                         .background(theme.surfaceSecondary)
                         .cornerRadius(8)
                         .contentShape(Rectangle())
@@ -280,57 +347,68 @@ struct EditTokenView: View {
                 .buttonStyle(.plain)
                 
                 Button(action: save) {
-                    HStack {
+                    HStack(spacing: 6) {
                         if isSaving {
-                            ProgressView().scaleEffect(0.7)
+                            ProgressView()
+                                .scaleEffect(0.7)
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         } else {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .semibold))
                             Text(L10n.save)
                         }
                     }
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(label.isEmpty ? theme.textTertiary : .white)
+                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(
-                        Group {
-                            if label.isEmpty {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(theme.surfaceSecondary)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(theme.border, lineWidth: 1)
-                                    )
-                            } else {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(theme.accentGradient)
-                            }
-                        }
-                    )
+                    .padding(.vertical, 11)
+                    .background(theme.accentGradient)
+                    .cornerRadius(8)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .disabled(label.isEmpty || isSaving)
+                .disabled(isSaving)
             }
-            .padding(14)
+            .padding(16)
         }
-        .frame(width: 300, height: 300)
+        .frame(width: 320, height: 420)
         .background(theme.background)
+        .preferredColorScheme(themeManager.isDark ? .dark : .light)
         .onAppear {
             issuer = token.issuer
             account = token.account
             label = token.label.isEmpty ? token.displayName : token.label
         }
+        .id(languageManager.languageMode) // Force refresh on language change
+    }
+    
+    private var iconGradientColors: [Color] {
+        let name = label.isEmpty ? token.displayName : label
+        let hash = abs(name.hashValue)
+        let hue1 = Double(hash % 360) / 360.0
+        let hue2 = Double((hash + 40) % 360) / 360.0
+        
+        let saturation = theme.isDark ? 0.70 : 0.60
+        let brightness1 = theme.isDark ? 0.80 : 0.70
+        let brightness2 = theme.isDark ? 0.65 : 0.55
+        
+        return [
+            Color(hue: hue1, saturation: saturation, brightness: brightness1),
+            Color(hue: hue2, saturation: saturation * 0.9, brightness: brightness2)
+        ]
     }
     
     private func save() {
         isSaving = true
         var updated = token
-        updated.issuer = issuer
-        updated.account = account
-        updated.label = label
+        updated.issuer = issuer.trimmingCharacters(in: .whitespacesAndNewlines)
+        updated.account = account.trimmingCharacters(in: .whitespacesAndNewlines)
+        updated.label = label.trimmingCharacters(in: .whitespacesAndNewlines)
+        updated.updatedAt = Date()
         
         do {
             try vaultService.updateToken(updated)
+            ToastManager.shared.show(L10n.saved)
             isPresented = false
         } catch {
             self.error = error.localizedDescription
@@ -342,23 +420,24 @@ struct EditTokenView: View {
 // MARK: - Edit Field Styled
 struct EditFieldStyled: View {
     let label: String
+    var placeholder: String = ""
     @Binding var text: String
     let theme: ModernTheme
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(label)
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(theme.textSecondary)
-            TextField("", text: $text)
+            TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
                 .foregroundColor(theme.textPrimary)
-                .padding(10)
+                .padding(12)
                 .background(theme.inputBackground)
-                .cornerRadius(6)
+                .cornerRadius(8)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: 8)
                         .stroke(theme.inputBorder, lineWidth: 1)
                 )
         }

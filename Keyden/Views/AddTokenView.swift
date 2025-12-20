@@ -419,7 +419,38 @@ struct AddTokenView: View {
         var duplicateCount = 0
         
         for line in lines {
-            if line.lowercased().hasPrefix("otpauth://") {
+            // First check for Google Authenticator migration format
+            if line.lowercased().hasPrefix("otpauth-migration://") {
+                if let parsedURLs = GoogleAuthMigrationService.shared.parseMigrationURL(line) {
+                    for url in parsedURLs {
+                        let normalizedSecret = url.secret.uppercased().replacingOccurrences(of: " ", with: "")
+                        
+                        // Check for duplicates within input
+                        if seenSecrets.contains(normalizedSecret) {
+                            duplicateCount += 1
+                            continue
+                        }
+                        
+                        // Check for duplicates with existing vault
+                        if vaultService.isDuplicate(secret: normalizedSecret) {
+                            duplicateCount += 1
+                            continue
+                        }
+                        
+                        seenSecrets.insert(normalizedSecret)
+                        tokens.append(PendingToken(
+                            issuer: url.issuer,
+                            account: url.account,
+                            secret: url.secret,
+                            digits: url.digits,
+                            period: url.period,
+                            algorithm: url.algorithm
+                        ))
+                    }
+                } else {
+                    invalidCount += 1
+                }
+            } else if line.lowercased().hasPrefix("otpauth://") {
                 if let url = OTPAuthURL.parse(line) {
                     let normalizedSecret = url.secret.uppercased().replacingOccurrences(of: " ", with: "")
                     

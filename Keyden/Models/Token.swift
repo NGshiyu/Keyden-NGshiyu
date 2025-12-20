@@ -83,10 +83,6 @@ struct Token: Identifiable, Codable, Equatable {
     
     /// Generate otpauth:// URL for this token
     var otpauthURL: String {
-        var components = URLComponents()
-        components.scheme = "otpauth"
-        components.host = "totp"
-        
         // Build label path: issuer:account or just account
         let labelPart: String
         if !issuer.isEmpty && !account.isEmpty {
@@ -98,32 +94,36 @@ struct Token: Identifiable, Codable, Equatable {
         } else {
             labelPart = "Unknown"
         }
-        components.path = "/\(labelPart)"
         
-        // Query parameters
-        var queryItems: [URLQueryItem] = [
-            URLQueryItem(name: "secret", value: secret)
-        ]
+        // Custom character set for path encoding (allow more characters than default)
+        var pathAllowed = CharacterSet.urlPathAllowed
+        pathAllowed.remove(":") // Keep colon unencoded for issuer:account format
+        let encodedLabel = labelPart.addingPercentEncoding(withAllowedCharacters: pathAllowed) ?? labelPart
         
+        // Build query parameters manually to ensure proper encoding
+        var queryParts: [String] = []
+        queryParts.append("secret=\(secret)")
+        
+        // Always include issuer in query parameters if not empty
         if !issuer.isEmpty {
-            queryItems.append(URLQueryItem(name: "issuer", value: issuer))
+            let encodedIssuer = issuer.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? issuer
+            queryParts.append("issuer=\(encodedIssuer)")
         }
         
         if digits != 6 {
-            queryItems.append(URLQueryItem(name: "digits", value: String(digits)))
+            queryParts.append("digits=\(digits)")
         }
         
         if period != 30 {
-            queryItems.append(URLQueryItem(name: "period", value: String(period)))
+            queryParts.append("period=\(period)")
         }
         
         if algorithm != .sha1 {
-            queryItems.append(URLQueryItem(name: "algorithm", value: algorithm.rawValue))
+            queryParts.append("algorithm=\(algorithm.rawValue)")
         }
         
-        components.queryItems = queryItems
-        
-        return components.string ?? "otpauth://totp/Unknown?secret=\(secret)"
+        let queryString = queryParts.joined(separator: "&")
+        return "otpauth://totp/\(encodedLabel)?\(queryString)"
     }
     
     // Handle migration from old format without isPinned

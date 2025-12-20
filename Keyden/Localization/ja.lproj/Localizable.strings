@@ -1,0 +1,175 @@
+/* Japanese Localization */
+
+// Common
+"copy" = "コピー";
+"copied" = "コピーしました";
+"cancel" = "キャンセル";
+"save" = "保存";
+"delete" = "削除";
+"confirm" = "確認";
+"settings" = "設定";
+"quit" = "終了";
+"search" = "検索";
+"add" = "追加";
+
+// Token List
+"no_accounts" = "アカウントがありません";
+"no_results" = "結果が見つかりません";
+"add_first_account" = "最初の 2FA アカウントを追加";
+"try_different_search" = "別の検索語をお試しください";
+"search_accounts" = "アカウントを検索...";
+"pin_to_top" = "ピン留め";
+"unpin" = "ピン留め解除";
+"copy_code" = "コードをコピー";
+"copy_otpauth" = "otpauth リンクをコピー";
+"download_qr_code" = "QR コードをダウンロード";
+
+// Add Token
+"add_account" = "アカウントを追加";
+"scan_qr_code" = "QR コードをスキャンまたはキーを入力";
+"paste_secret_key" = "otpauth:// リンクまたはキーを貼り付け";
+"scan_clipboard" = "クリップボード";
+"choose_image" = "画像を選択";
+"capture_screen" = "画面をキャプチャ";
+"capture_screen_hint" = "Cmd+Shift+4 でスクリーンショットを撮り、クリップボードをクリック";
+"capture_screen_error" = "キャプチャに失敗しました";
+"scan_screen" = "スクリーンショット認識";
+"scan_screen_hint" = "クリックして画面上の QR コード領域を選択";
+"screen_recording_permission" = "画面収録の許可が必要です";
+"screen_recording_permission_desc" = "Keyden は画面上の QR コードを認識するために画面収録の許可が必要です。「システム設定 → プライバシーとセキュリティ → 画面収録」で有効にしてください。";
+"open_settings" = "設定を開く";
+"enter_manually" = "手動で入力";
+"confirm_add" = "確認して追加";
+"add_and_next" = "追加して次へ";
+"add_all" = "すべて追加 (%d)";
+"added_count" = "%d 件のアカウントを追加しました";
+"skip" = "スキップ";
+"invalid_format" = "形式が無効です。otpauth:// リンクまたは Base32 キーを使用してください";
+"no_qr_code_found" = "画像に QR コードが見つかりません";
+"not_a_2fa_code" = "この QR コードは 2FA コードではありません";
+"secret_required" = "キーは必須です";
+"duplicate_account" = "このアカウントは既に存在します";
+"quick_add_platforms" = "人気プラットフォームを素早く追加";
+"service" = "サービス";
+"account" = "アカウント";
+"algorithm" = "アルゴリズム";
+
+// Settings
+"general" = "一般";
+"sync" = "同期";
+"data" = "データ";
+"appearance" = "外観";
+"theme" = "テーマ";
+"theme_system" = "システムに従う";
+"theme_light" = "ライト";
+"theme_dark" = "ダーク";
+"clipboard" = "クリップボード";
+"auto_clear" = "クリップボードを自動クリア";
+"auto_clear_desc" = "コピー後 30 秒で自動クリア";
+"statistics" = "統計";
+"accounts" = "アカウント数";
+"pinned" = "ピン留め済み";
+"about" = "情報";
+"version" = "バージョン";
+"launch_at_login" = "ログイン時に起動";
+"launch_at_login_desc" = "Mac にログインしたときに Keyden を自動起動";
+
+// Language
+"language" = "言語";
+"language_system" = "システムに従う";
+"language_desc" = "お好みの言語を選択";
+
+// Sync
+"github_gist" = "GitHub Gist";
+"personal_access_token" = "個人アクセストークン";
+"connected" = "接続済み";
+"not_configured" = "未設定";
+"configure" = "設定";
+"change" = "変更";
+"auto_sync" = "自動同期";
+"auto_sync_desc" = "変更時に自動的にクラウドに同期";
+"gist_id" = "Gist ID";
+"will_create_on_sync" = "初回同期時に自動作成";
+"bind" = "バインド";
+"bind_existing" = "既存をバインド";
+"manual_sync" = "手動同期";
+"push" = "プッシュ";
+"pull" = "プル";
+"last_sync" = "最終同期";
+"syncing" = "同期中...";
+"push_success" = "プッシュ成功";
+"pull_success" = "プル成功";
+"data_synced" = "データを同期しました";
+"pull_confirm_title" = "クラウドからプル";
+"pull_confirm_message" = "ローカルのすべてのアカウントがクラウドのデータで置き換えられます。続行しますか？";
+"token_saved" = "トークンを保存しました";
+"invalid_token" = "トークンが無効です。確認して再試行してください";
+"open_github_token_settings" = "GitHub トークン設定を開く";
+"create_token_desc" = "'gist' スコープを持つ個人アクセストークンを作成";
+
+// Data
+"export" = "エクスポート";
+"export_desc" = "すべてのアカウントを JSON ファイルにエクスポートしてバックアップまたは移行。";
+"export_button" = "エクスポート";
+"export_success" = "エクスポート成功";
+"import" = "インポート";
+"import_desc" = "以前エクスポートした JSON ファイルからアカウントをインポート。";
+"import_button" = "インポート";
+"merge_with_existing" = "既存と統合";
+"duplicates_skipped" = "重複はスキップされます";
+"import_confirm_title" = "アカウントをインポート";
+"import_confirm_message" = "インポートしたアカウントが既存のアカウントと統合されます。続行しますか？";
+"import_success" = "インポート成功";
+"security_warning" = "エクスポートファイルには暗号化されていないキーが含まれています。安全に保管してください！";
+"unencrypted_json" = "暗号化されていない JSON 形式";
+"export_text" = "TXT をエクスポート";
+"export_json" = "JSON をエクスポート";
+"export_text_desc" = "1 行に 1 つの otpauth:// リンクを含むプレーンテキストとしてエクスポート。";
+"otpauth_uri_format" = "otpauth:// リンク形式";
+"clear_all_data" = "すべてのデータを消去";
+"clear_all_data_desc" = "すべてのアカウントを完全に削除します。この操作は取り消せません。";
+"clear_all_data_confirm_title" = "すべてのデータを消去";
+"clear_all_data_confirm_message" = "すべてのアカウントを削除してもよろしいですか？この操作は取り消せません。";
+"clear_all_data_button" = "消去";
+"data_cleared" = "データを消去しました";
+
+// Management
+"manage_accounts" = "アカウント管理";
+"edit_account" = "アカウントを編集";
+"delete_account" = "アカウントを削除";
+"delete_confirm_message" = "「%@」を削除してもよろしいですか？";
+"name" = "名前";
+"issuer" = "発行者";
+"save_backup_message" = "バックアップの保存先を選択";
+"open_in_browser" = "ブラウザで開く";
+
+// Update
+"check_update" = "アップデートを確認";
+"new_version_available" = "新しいバージョンがあります";
+"up_to_date" = "最新です";
+"checking_update" = "確認中...";
+
+// Hotkey
+"hotkey" = "ホットキー";
+"open_menu" = "メニューを開く";
+"press_shortcut" = "キーを押してください...";
+"not_set" = "未設定";
+"clear_shortcut" = "クリア";
+"hotkey_desc" = "ホットキーでメニューバーを開く";
+
+// Filter
+"filter_all" = "すべて";
+"filter_grouped" = "グループ";
+"pinned_section" = "ピン留め";
+"other_section" = "その他";
+
+// Edit
+"edit" = "編集";
+"edit_account" = "アカウントを編集";
+"saved" = "保存しました";
+"label" = "ラベル";
+"digits" = "桁数";
+"period" = "期間";
+"service_placeholder" = "例: Google、GitHub";
+"account_placeholder" = "例: user@example.com";
+"label_placeholder" = "カスタム表示名（任意）";

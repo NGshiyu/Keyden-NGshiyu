@@ -13,12 +13,16 @@ enum LanguageMode: String, CaseIterable {
     case system = "system"
     case english = "en"
     case chinese = "zh-Hans"
+    case chineseTraditional = "zh-Hant"
+    case japanese = "ja"
     
     var displayName: String {
         switch self {
         case .system: return L10n.languageSystem
         case .english: return "English"
-        case .chinese: return "中文"
+        case .chinese: return "简体中文"
+        case .chineseTraditional: return "繁體中文"
+        case .japanese: return "日本語"
         }
     }
     
@@ -27,6 +31,8 @@ enum LanguageMode: String, CaseIterable {
         case .system: return "globe"
         case .english: return "a.circle"
         case .chinese: return "character.textbox"
+        case .chineseTraditional: return "character.textbox"
+        case .japanese: return "character.textbox"
         }
     }
 }
@@ -47,14 +53,22 @@ class LanguageManager: ObservableObject {
         switch languageMode {
         case .system:
             let preferredLanguage = Locale.preferredLanguages.first ?? "en"
-            if preferredLanguage.hasPrefix("zh") {
+            if preferredLanguage.hasPrefix("zh-Hant") || preferredLanguage.hasPrefix("zh-TW") || preferredLanguage.hasPrefix("zh-HK") {
+                return "zh-Hant"
+            } else if preferredLanguage.hasPrefix("zh") {
                 return "zh-Hans"
+            } else if preferredLanguage.hasPrefix("ja") {
+                return "ja"
             }
             return "en"
         case .english:
             return "en"
         case .chinese:
             return "zh-Hans"
+        case .chineseTraditional:
+            return "zh-Hant"
+        case .japanese:
+            return "ja"
         }
     }
     
@@ -196,6 +210,12 @@ class LanguageManager: ObservableObject {
         "export_json": "Export JSON",
         "export_text_desc": "Export as plain text with otpauth:// URIs, one per line.",
         "otpauth_uri_format": "otpauth:// URI format",
+        "clear_all_data": "Clear All Data",
+        "clear_all_data_desc": "Delete all accounts permanently. This cannot be undone.",
+        "clear_all_data_confirm_title": "Clear All Data",
+        "clear_all_data_confirm_message": "Are you sure you want to delete all accounts? This action cannot be undone.",
+        "clear_all_data_button": "Clear All",
+        "data_cleared": "All data cleared",
         
         // Update
         "check_update": "Check for Updates",
@@ -215,7 +235,18 @@ class LanguageManager: ObservableObject {
         "filter_all": "All",
         "filter_grouped": "Grouped",
         "pinned_section": "Pinned",
-        "other_section": "Other"
+        "other_section": "Other",
+        
+        // Edit
+        "edit": "Edit",
+        "edit_account": "Edit Account",
+        "saved": "Saved",
+        "label": "Label",
+        "digits": "Digits",
+        "period": "Period",
+        "service_placeholder": "e.g. Google, GitHub",
+        "account_placeholder": "e.g. user@example.com",
+        "label_placeholder": "Custom display name (optional)"
     ]
 }
 
@@ -385,6 +416,24 @@ enum L10n {
     static var filterGrouped: String { manager.localizedString(forKey: "filter_grouped") }
     static var pinnedSection: String { manager.localizedString(forKey: "pinned_section") }
     static var otherSection: String { manager.localizedString(forKey: "other_section") }
+    
+    // MARK: - Edit
+    static var edit: String { manager.localizedString(forKey: "edit") }
+    static var saved: String { manager.localizedString(forKey: "saved") }
+    static var label: String { manager.localizedString(forKey: "label") }
+    static var digits: String { manager.localizedString(forKey: "digits") }
+    static var period: String { manager.localizedString(forKey: "period") }
+    static var servicePlaceholder: String { manager.localizedString(forKey: "service_placeholder") }
+    static var accountPlaceholder: String { manager.localizedString(forKey: "account_placeholder") }
+    static var labelPlaceholder: String { manager.localizedString(forKey: "label_placeholder") }
+    
+    // MARK: - Clear Data
+    static var clearAllData: String { manager.localizedString(forKey: "clear_all_data") }
+    static var clearAllDataDesc: String { manager.localizedString(forKey: "clear_all_data_desc") }
+    static var clearAllDataConfirmTitle: String { manager.localizedString(forKey: "clear_all_data_confirm_title") }
+    static var clearAllDataConfirmMessage: String { manager.localizedString(forKey: "clear_all_data_confirm_message") }
+    static var clearAllDataButton: String { manager.localizedString(forKey: "clear_all_data_button") }
+    static var dataCleared: String { manager.localizedString(forKey: "data_cleared") }
 }
 
 // MARK: - RawRepresentable for AppStorage

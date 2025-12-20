@@ -43,24 +43,37 @@ final class QRCodeService {
         return .noQRCode
     }
     
-    /// Parse otpauth:// URLs from text
+    /// Parse otpauth:// or otpauth-migration:// URLs from text
     private func parseOTPAuthFromText(_ text: String) -> QRScanResult {
-        // Find all otpauth:// URLs in the text
-        let pattern = "otpauth://[^\\s]+"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-            return .noOTPAuth
-        }
-        
-        let range = NSRange(text.startIndex..., in: text)
-        let matches = regex.matches(in: text, options: [], range: range)
-        
         var otpAuthURLs: [OTPAuthURL] = []
         
-        for match in matches {
-            guard let range = Range(match.range, in: text) else { continue }
-            let urlString = String(text[range])
-            if let otpAuth = OTPAuthURL.parse(urlString) {
-                otpAuthURLs.append(otpAuth)
+        // First, check for Google Authenticator migration format
+        let migrationPattern = "otpauth-migration://[^\\s]+"
+        if let migrationRegex = try? NSRegularExpression(pattern: migrationPattern, options: []) {
+            let range = NSRange(text.startIndex..., in: text)
+            let matches = migrationRegex.matches(in: text, options: [], range: range)
+            
+            for match in matches {
+                guard let range = Range(match.range, in: text) else { continue }
+                let urlString = String(text[range])
+                if let parsedURLs = GoogleAuthMigrationService.shared.parseMigrationURL(urlString) {
+                    otpAuthURLs.append(contentsOf: parsedURLs)
+                }
+            }
+        }
+        
+        // Then, find all standard otpauth:// URLs in the text
+        let pattern = "otpauth://[^\\s]+"
+        if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+            let range = NSRange(text.startIndex..., in: text)
+            let matches = regex.matches(in: text, options: [], range: range)
+            
+            for match in matches {
+                guard let range = Range(match.range, in: text) else { continue }
+                let urlString = String(text[range])
+                if let otpAuth = OTPAuthURL.parse(urlString) {
+                    otpAuthURLs.append(otpAuth)
+                }
             }
         }
         
@@ -143,7 +156,7 @@ final class QRCodeService {
             return .error(error)
         }
         
-        // Extract otpauth:// URLs from detected QR codes
+        // Extract otpauth:// or otpauth-migration:// URLs from detected QR codes
         var otpAuthURLs: [OTPAuthURL] = []
         
         for barcode in detectedBarcodes {
@@ -155,6 +168,16 @@ final class QRCodeService {
             
             print("[QRCodeService] 条码内容: \(payload.prefix(100))...")
             
+            // First try Google Authenticator migration format
+            if payload.lowercased().hasPrefix("otpauth-migration://") {
+                if let parsedURLs = GoogleAuthMigrationService.shared.parseMigrationURL(payload) {
+                    print("[QRCodeService] 解析 Google Authenticator 迁移数据成功: \(parsedURLs.count) 个账户")
+                    otpAuthURLs.append(contentsOf: parsedURLs)
+                    continue
+                }
+            }
+            
+            // Then try standard otpauth:// format
             if let otpAuth = OTPAuthURL.parse(payload) {
                 print("[QRCodeService] 解析成功: issuer=\(otpAuth.issuer), account=\(otpAuth.account)")
                 otpAuthURLs.append(otpAuth)

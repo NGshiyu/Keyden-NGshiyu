@@ -789,9 +789,12 @@ struct SyncTabContent: View {
 struct DataTabContent: View {
     let theme: ModernTheme
     @StateObject private var vaultService = VaultService.shared
+    @StateObject private var gistService = GistSyncService.shared
+    @AppStorage("autoSync") private var autoSync = true
     
     @State private var showingExportSuccess = false
     @State private var showingImportConfirm = false
+    @State private var showingClearConfirm = false
     @State private var importURL: URL?
     @State private var message: (text: String, isError: Bool)?
     
@@ -891,6 +894,43 @@ struct DataTabContent: View {
                 }
             }
             
+            // Clear all data section
+            SettingsCard(title: L10n.clearAllData, icon: "trash.fill", theme: theme) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(L10n.clearAllDataDesc)
+                        .font(.system(size: 12))
+                        .foregroundColor(theme.textSecondary)
+                    
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(vaultService.vault.tokens.count) \(L10n.accounts)")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(theme.textPrimary)
+                        }
+                        
+                        Spacer()
+                        
+                        Button(action: { showingClearConfirm = true }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 11))
+                                Text(L10n.clearAllDataButton)
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(theme.danger)
+                            .cornerRadius(6)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(vaultService.vault.tokens.isEmpty)
+                        .opacity(vaultService.vault.tokens.isEmpty ? 0.5 : 1)
+                    }
+                }
+            }
+            
             // Warning
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
@@ -930,6 +970,32 @@ struct DataTabContent: View {
             Button(L10n.importData) { performImport() }
         } message: {
             Text(L10n.importConfirmMessage)
+        }
+        .alert(L10n.clearAllDataConfirmTitle, isPresented: $showingClearConfirm) {
+            Button(L10n.cancel, role: .cancel) {}
+            Button(L10n.clearAllDataButton, role: .destructive) { clearAllData() }
+        } message: {
+            Text(L10n.clearAllDataConfirmMessage)
+        }
+    }
+    
+    private func clearAllData() {
+        message = nil
+        
+        do {
+            try vaultService.clearAllTokens()
+            
+            // Sync to cloud if auto-sync is enabled
+            if autoSync && gistService.isConfigured {
+                Task {
+                    try? await gistService.push(force: true)
+                }
+            }
+            
+            // Show toast
+            ToastManager.shared.show(L10n.dataCleared, icon: "trash.fill")
+        } catch {
+            message = ("Clear failed: \(error.localizedDescription)", true)
         }
     }
     

@@ -103,6 +103,7 @@ struct MenuBarContentView: View {
     @State private var draggedToken: Token?
     @State private var currentView: ViewMode = .list
     @State private var filterMode: FilterMode = .all
+    @State private var editingToken: Token?
     
     private var theme: ModernTheme {
         ModernTheme(isDark: themeManager.isDark)
@@ -155,6 +156,12 @@ struct MenuBarContentView: View {
         .frame(width: 340, height: 520)
         .background(theme.background)
         .environment(\.theme, theme)
+        .sheet(item: $editingToken) { token in
+            EditTokenView(token: token, isPresented: Binding(
+                get: { editingToken != nil },
+                set: { if !$0 { editingToken = nil } }
+            ))
+        }
     }
     
     // MARK: - List View
@@ -323,6 +330,8 @@ struct MenuBarContentView: View {
             token: token,
             copiedId: $copiedTokenId,
             onPin: { togglePin(token) },
+            onEdit: { editingToken = token },
+            onStartDrag: { draggedToken = token },
             theme: theme
         )
         .onDrag {
@@ -480,6 +489,8 @@ struct TokenRow: View {
     let token: Token
     @Binding var copiedId: UUID?
     let onPin: () -> Void
+    let onEdit: () -> Void
+    let onStartDrag: () -> Void
     let theme: ModernTheme
     
     @State private var currentCode = ""
@@ -488,6 +499,7 @@ struct TokenRow: View {
     @State private var isHovering = false
     @State private var isPressed = false
     @State private var isInitialized = false
+    @State private var isDragging = false
     
     private var isCopied: Bool { copiedId == token.id }
     
@@ -603,24 +615,31 @@ struct TokenRow: View {
         .opacity(isPressed ? 0.9 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
         .contentShape(Rectangle())
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    if !isPressed {
-                        isPressed = true
-                    }
-                }
-                .onEnded { _ in
-                    isPressed = false
-                    copyCode()
-                }
-        )
+        .onTapGesture {
+            copyCode()
+        }
+        .onLongPressGesture(minimumDuration: 0.3, pressing: { pressing in
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isPressed = pressing
+            }
+            if pressing {
+                // Haptic feedback would go here on iOS
+            }
+        }, perform: {
+            // Long press completed - start drag mode
+            isDragging = true
+            onStartDrag()
+        })
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isHovering = hovering
             }
         }
         .contextMenu {
+            Button(action: onEdit) {
+                Label(L10n.edit, systemImage: "pencil")
+            }
+            
             Button(action: onPin) {
                 Label(token.isPinned ? L10n.unpin : L10n.pinToTop, systemImage: token.isPinned ? "pin.slash" : "pin")
             }
