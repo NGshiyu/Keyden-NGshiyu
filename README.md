@@ -73,6 +73,14 @@ Since the app is not signed with a paid Apple Developer account, macOS may not p
 3. Reopen Keyden, the system will request permission again
 4. Click "+" to add Keyden and grant permission
 
+### Keychain Access Prompt
+
+After installing a new version, macOS may prompt you to authorize Keychain access. This is normal because the app signature changes with each update.
+
+**Solution:**
+
+Simply click "Always Allow" or "Allow" when prompted. Your TOTP secrets are stored securely in the macOS Keychain and will remain intact after the update.
+
 
 ---
 
