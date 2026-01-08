@@ -122,11 +122,17 @@ final class MenuBarController: ObservableObject {
         
         isPopoverShown = true
         NSApp.activate(ignoringOtherApps: true)
+        
+        // Notify TOTP timer to start
+        NotificationCenter.default.post(name: .totpTimerShouldStart, object: nil)
     }
     
     func hidePanel() {
         panel?.orderOut(nil)
         isPopoverShown = false
+        
+        // Notify TOTP timer to stop (saves CPU when panel is hidden)
+        NotificationCenter.default.post(name: .totpTimerShouldStop, object: nil)
     }
     
     deinit {

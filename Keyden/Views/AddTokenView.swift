@@ -888,7 +888,8 @@ struct TokenPreviewCard: View {
     
     @State private var code = "------"
     @State private var remaining = 30
-    @State private var timer: Timer?
+    
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     var body: some View {
         VStack(spacing: 12) {
@@ -908,7 +909,6 @@ struct TokenPreviewCard: View {
                     .stroke(theme.accent, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                     .frame(width: 40, height: 40)
                     .rotationEffect(.degrees(-90))
-                    .animation(.linear(duration: 1), value: remaining)
                 
                 Text("\(remaining)")
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
@@ -925,8 +925,10 @@ struct TokenPreviewCard: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(theme.border, lineWidth: 1)
         )
-        .onAppear(perform: startTimer)
-        .onDisappear { timer?.invalidate() }
+        .onAppear { updateCode() }
+        .onReceive(timer) { _ in
+            updateCode()
+        }
     }
     
     private func formatCode(_ code: String) -> String {
@@ -935,20 +937,17 @@ struct TokenPreviewCard: View {
         return "\(code[..<mid]) \(code[mid...])"
     }
     
-    private func startTimer() {
-        updateCode()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            updateCode()
-        }
-    }
-    
     private func updateCode() {
-        if !secret.isEmpty {
-            code = TOTPService.shared.generateCode(
-                secret: secret, digits: digits, period: period, algorithm: algorithm
-            ) ?? "------"
+        let newRemaining = TOTPService.shared.remainingSeconds(for: period)
+        // Only regenerate code when needed
+        if newRemaining > remaining || code == "------" {
+            if !secret.isEmpty {
+                code = TOTPService.shared.generateCode(
+                    secret: secret, digits: digits, period: period, algorithm: algorithm
+                ) ?? "------"
+            }
         }
-        remaining = TOTPService.shared.remainingSeconds(for: period)
+        remaining = newRemaining
     }
 }
 

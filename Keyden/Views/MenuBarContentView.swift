@@ -330,7 +330,7 @@ struct MenuBarContentView: View {
                         if isPinned {
                             // Pinned items: no header, just show tokens directly
                             ForEach(group.1) { token in
-                                tokenRowView(for: token)
+                                tokenRowWrapper(for: token)
                             }
                             
                             // Add a subtle divider after pinned items if there are more groups
@@ -343,7 +343,7 @@ struct MenuBarContentView: View {
                             // Regular groups with header
                             Section {
                                 ForEach(group.1) { token in
-                                    tokenRowView(for: token)
+                                    tokenRowWrapper(for: token)
                                 }
                             } header: {
                                 sectionHeader(title: group.0, count: group.1.count)
@@ -353,7 +353,7 @@ struct MenuBarContentView: View {
                 } else {
                     // Flat list view
                     ForEach(filteredTokens) { token in
-                        tokenRowView(for: token)
+                        tokenRowWrapper(for: token)
                     }
                 }
             }
@@ -362,25 +362,17 @@ struct MenuBarContentView: View {
         }
     }
     
-    private func tokenRowView(for token: Token) -> some View {
-        TokenRow(
+    private func tokenRowWrapper(for token: Token) -> some View {
+        TokenRowWrapper(
             token: token,
             copiedId: $copiedTokenId,
-            onPin: { togglePin(token) },
-            onEdit: { editingToken = token },
-            onStartDrag: { draggedToken = token },
-            theme: theme
-        )
-        .onDrag {
-            draggedToken = token
-            return NSItemProvider(object: token.id.uuidString as NSString)
-        }
-        .onDrop(of: [.text], delegate: TokenDropDelegate(
-            token: token,
-            tokens: sortedTokens,
             draggedToken: $draggedToken,
+            editingToken: $editingToken,
+            sortedTokens: sortedTokens,
+            theme: theme,
+            onPin: { togglePin(token) },
             onReorder: reorderTokens
-        ))
+        )
     }
     
     private func sectionHeader(title: String, count: Int) -> some View {
@@ -521,21 +513,85 @@ struct MenuBarContentView: View {
     }
 }
 
+// MARK: - Token Row Wrapper - Isolates timer updates
+struct TokenRowWrapper: View {
+    let token: Token
+    @Binding var copiedId: UUID?
+    @Binding var draggedToken: Token?
+    @Binding var editingToken: Token?
+    let sortedTokens: [Token]
+    let theme: ModernTheme
+    let onPin: () -> Void
+    let onReorder: (Token, Token) -> Void
+    
+    @State private var currentCode: String = "------"
+    @State private var remainingSeconds: Int = 30
+    
+    private let timerService = TOTPTimerService.shared
+    
+    var body: some View {
+        TokenRow(
+            token: token,
+            currentCode: currentCode,
+            remainingSeconds: remainingSeconds,
+            copiedId: $copiedId,
+            onPin: onPin,
+            onEdit: { editingToken = token },
+            onStartDrag: { draggedToken = token },
+            theme: theme
+        )
+        .onAppear {
+            timerService.register(token)
+            updateFromCache()
+        }
+        .onChange(of: token) { _ in
+            timerService.register(token)
+            updateFromCache()
+        }
+        .onDisappear {
+            timerService.unregister(token.id)
+        }
+        .onReceive(timerService.$tick) { _ in
+            updateFromCache()
+        }
+        .onDrag {
+            draggedToken = token
+            return NSItemProvider(object: token.id.uuidString as NSString)
+        }
+        .onDrop(of: [.text], delegate: TokenDropDelegate(
+            token: token,
+            tokens: sortedTokens,
+            draggedToken: $draggedToken,
+            onReorder: onReorder
+        ))
+    }
+    
+    private func updateFromCache() {
+        if let entry = timerService.cache[token.id] {
+            // Only update if values changed to avoid unnecessary redraws
+            if currentCode != entry.code {
+                currentCode = entry.code
+            }
+            if remainingSeconds != entry.remainingSeconds {
+                remainingSeconds = entry.remainingSeconds
+            }
+        }
+    }
+}
+
 // MARK: - Token Row - Compact with Ring Progress
 struct TokenRow: View {
     let token: Token
+    let currentCode: String
+    let remainingSeconds: Int
     @Binding var copiedId: UUID?
     let onPin: () -> Void
     let onEdit: () -> Void
     let onStartDrag: () -> Void
     let theme: ModernTheme
     
-    @State private var currentCode = ""
-    @State private var remainingSeconds = 30
-    @State private var timer: Timer?
     @State private var isHovering = false
     @State private var isPressed = false
-    @State private var isInitialized = false
     @State private var isDragging = false
     
     private var isCopied: Bool { copiedId == token.id }
@@ -624,7 +680,6 @@ struct TokenRow: View {
                         .foregroundColor(progressColor)
                 }
                 .frame(width: 22, height: 22)
-                .animation(isInitialized ? .linear(duration: 1) : nil, value: remainingSeconds)
                 
                 Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
                     .font(.system(size: 10, weight: .medium))
@@ -705,8 +760,6 @@ struct TokenRow: View {
                 Label(L10n.delete, systemImage: "trash")
             }
         }
-        .onAppear(perform: startTimer)
-        .onDisappear(perform: stopTimer)
     }
     
     private var serviceIcon: some View {
@@ -796,30 +849,6 @@ struct TokenRow: View {
         _ = QRCodeService.shared.saveQRCodeToDownloads(for: token)
     }
     
-    private func startTimer() {
-        // Initialize without animation
-        updateCode()
-        
-        // Enable animation after a brief delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            isInitialized = true
-        }
-        
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            updateCode()
-        }
-    }
-    
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-        isInitialized = false
-    }
-    
-    private func updateCode() {
-        currentCode = TOTPService.shared.generateCode(for: token) ?? "------"
-        remainingSeconds = TOTPService.shared.remainingSeconds(for: token.period)
-    }
 }
 
 // MARK: - Footer Icon Button
