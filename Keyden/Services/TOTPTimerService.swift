@@ -61,6 +61,8 @@ final class TOTPTimerService: ObservableObject {
         
         // Immediately update all registered tokens
         updateAllCodes()
+        // Notify observers immediately so UI refreshes without waiting for the first tick
+        tick &+= 1
         
         // Create timer on main run loop
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
