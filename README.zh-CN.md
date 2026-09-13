@@ -300,16 +300,16 @@ make build-all      # 通用
 
 ## ⭐ Star History
 
-<a href=" " target="_blank" rel="noopener noreferrer">
+<a href="https://github.com/starcat-app/Starcat" target="_blank" rel="noopener noreferrer">
   <picture data-starcat-star-history>
     <source
       media="(prefers-color-scheme: dark)"
-      srcset="https://history.starcat.ink/embed/v1/repos/starcat-app/Starcat/star-history.svg?theme=dark&amp;locale=zh">
+      srcset="https://history.starcat.ink/embed/v1/repos/tasselx/Keyden/star-history.svg?theme=dark&amp;locale=en">
     <img
-      alt="starcat-app/Starcat 星标历史"
-      src="https://history.starcat.ink/embed/v1/repos/starcat-app/Starcat/star-history.svg?theme=light&amp;locale=zh">
+      alt="starcat-app/Starcat Star History"
+      src="https://history.starcat.ink/embed/v1/repos/tasselx/Keyden/star-history.svg?theme=light&amp;locale=en">
   </picture>
-</a >
+</a>
 
 ---
 
