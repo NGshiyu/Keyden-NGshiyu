@@ -300,11 +300,16 @@ make build-all      # 通用
 
 ## ⭐ Star History
 
-<p align="center">
-  <a href="https://star-history.com/#tasselx/Keyden&Date">
-    <img src="https://api.star-history.com/svg?repos=tasselx/Keyden&type=Date" alt="Star History Chart" />
-  </a>
-</p>
+<a href=" " target="_blank" rel="noopener noreferrer">
+  <picture data-starcat-star-history>
+    <source
+      media="(prefers-color-scheme: dark)"
+      srcset="https://history.starcat.ink/embed/v1/repos/starcat-app/Starcat/star-history.svg?theme=dark&amp;locale=zh">
+    <img
+      alt="starcat-app/Starcat 星标历史"
+      src="https://history.starcat.ink/embed/v1/repos/starcat-app/Starcat/star-history.svg?theme=light&amp;locale=zh">
+  </picture>
+</a >
 
 ---
 
