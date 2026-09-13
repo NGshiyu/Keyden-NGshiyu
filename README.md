@@ -298,13 +298,16 @@ Your sponsorship can help me purchase an Apple Developer account, which will all
 
 ## ⭐ Star History
 
-<p align="center">
-  <a href="https://star-history.com/#tasselx/Keyden&Date">
-    <img src="https://api.star-history.com/svg?repos=tasselx/Keyden&type=Date" alt="Star History Chart" />
-  </a>
-</p>
-
----
+<a href="https://github.com/starcat-app/Starcat" target="_blank" rel="noopener noreferrer">
+  <picture data-starcat-star-history>
+    <source
+      media="(prefers-color-scheme: dark)"
+      srcset="https://history.starcat.ink/embed/v1/repos/tasselx/Keyden/star-history.svg?theme=dark&amp;locale=en">
+    <img
+      alt="starcat-app/Starcat Star History"
+      src="https://history.starcat.ink/embed/v1/repos/tasselx/Keyden/star-history.svg?theme=light&amp;locale=en">
+  </picture>
+</a>
 
 <p align="center">
   <sub>MIT License © <a href="https://github.com/tasselx">tasselx</a></sub>
