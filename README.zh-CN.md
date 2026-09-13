@@ -300,7 +300,7 @@ make build-all      # 通用
 
 ## ⭐ Star History
 
-<a href="https://github.com/starcat-app/Starcat" target="_blank" rel="noopener noreferrer">
+<a href="https://github.com/tasselx/Keyden" target="_blank" rel="noopener noreferrer">
   <picture data-starcat-star-history>
     <source
       media="(prefers-color-scheme: dark)"
